@@ -1,17 +1,83 @@
 {
-  "_comment": "11단계 노드 사다리. legacy_web/index.html 의 RAD(17~118) 순서를 따른다. art 의 {state} 는 neutral/surprised/squash/happy 로 치환되고, {state} 가 없으면 모든 표정에 같은 이미지를 쓴다. 코덱스 11종 시안 통과 후 art 경로만 교체하고 placeholder 를 false 로 바꾸면 된다.",
+  "_comment": "11단계 노드 사다리(legacy_web RAD 순서). art 의 {state} 는 neutral/surprised/squash/happy 로 치환되고, {state} 가 없으면 모든 표정에 같은 이미지를 쓴다. 시안 v1(art/drafts/nodes_11_v1) 사용자 통과분 적용.",
   "drop_max_stage": 5,
   "nodes": [
-    {"id": "chiikawa",  "name": "치이카와",     "radius": 17,  "art": "res://assets/heads/chiikawa_{state}.png",  "placeholder": false},
-    {"id": "hachiware", "name": "하치와레",     "radius": 23,  "art": "res://assets/heads/hachiware_{state}.png", "placeholder": false},
-    {"id": "usagi",     "name": "우사기",       "radius": 30,  "art": "res://assets/heads/usagi_{state}.png",     "placeholder": false},
-    {"id": "node04",    "name": "노드 4(임시)",  "radius": 37,  "art": "res://assets/nodes_placeholder/node04.png", "placeholder": true},
-    {"id": "node05",    "name": "노드 5(임시)",  "radius": 45,  "art": "res://assets/nodes_placeholder/node05.png", "placeholder": true},
-    {"id": "node06",    "name": "노드 6(임시)",  "radius": 54,  "art": "res://assets/nodes_placeholder/node06.png", "placeholder": true},
-    {"id": "node07",    "name": "노드 7(임시)",  "radius": 64,  "art": "res://assets/nodes_placeholder/node07.png", "placeholder": true},
-    {"id": "node08",    "name": "노드 8(임시)",  "radius": 75,  "art": "res://assets/nodes_placeholder/node08.png", "placeholder": true},
-    {"id": "node09",    "name": "노드 9(임시)",  "radius": 88,  "art": "res://assets/nodes_placeholder/node09.png", "placeholder": true},
-    {"id": "node10",    "name": "노드 10(임시)", "radius": 102, "art": "res://assets/nodes_placeholder/node10.png", "placeholder": true},
-    {"id": "node11",    "name": "노드 11(임시)", "radius": 118, "art": "res://assets/nodes_placeholder/node11.svg", "placeholder": true}
+    {
+      "id": "chiikawa",
+      "name": "치이카와",
+      "radius": 17,
+      "art": "res://assets/heads/node01_chiikawa.png",
+      "placeholder": false
+    },
+    {
+      "id": "hachiware",
+      "name": "하치와레",
+      "radius": 23,
+      "art": "res://assets/heads/node02_hachiware.png",
+      "placeholder": false
+    },
+    {
+      "id": "usagi",
+      "name": "우사기",
+      "radius": 30,
+      "art": "res://assets/heads/node03_usagi.png",
+      "placeholder": false
+    },
+    {
+      "id": "momonga",
+      "name": "모몽가",
+      "radius": 37,
+      "art": "res://assets/heads/node04_momonga.png",
+      "placeholder": false
+    },
+    {
+      "id": "kurimanju",
+      "name": "쿠리만쥬",
+      "radius": 45,
+      "art": "res://assets/heads/node05_kurimanju.png",
+      "placeholder": false
+    },
+    {
+      "id": "furuhonya",
+      "name": "후루혼야",
+      "radius": 54,
+      "art": "res://assets/heads/node06_furuhonya.png",
+      "placeholder": false
+    },
+    {
+      "id": "shisa",
+      "name": "시사",
+      "radius": 64,
+      "art": "res://assets/heads/node07_shisa.png",
+      "placeholder": false
+    },
+    {
+      "id": "rakko",
+      "name": "랏코",
+      "radius": 75,
+      "art": "res://assets/heads/node08_rakko.png",
+      "placeholder": false
+    },
+    {
+      "id": "anoko",
+      "name": "아노코",
+      "radius": 88,
+      "art": "res://assets/heads/node09_anoko.png",
+      "placeholder": false
+    },
+    {
+      "id": "dekatsuyo",
+      "name": "데카츠요",
+      "radius": 102,
+      "art": "res://assets/heads/node10_dekatsuyo.png",
+      "placeholder": false
+    },
+    {
+      "id": "siren",
+      "name": "세이렌",
+      "radius": 118,
+      "art": "res://assets/heads/node11_siren.png",
+      "placeholder": false
+    }
   ]
 }

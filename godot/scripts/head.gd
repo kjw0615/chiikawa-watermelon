@@ -4,6 +4,8 @@ extends RigidBody2D
 
 signal touched(head: Head, other: Node, speed: float)
 
+const MAX_SPEED := 1400.0
+const MAX_SPIN := 12.0
 const DEPTH_LAYERS := 6
 const DEPTH_STEP := 2.5
 const SHADOW_OFFSET := Vector2(12, 16)
@@ -35,7 +37,7 @@ func setup(st: int) -> void:
 	var col: Color = data["color"]
 	top_extent = data["top"]
 
-	mass = maxf(data["area"] / 2500.0, 0.2)
+	mass = pow(maxf(data["area"] / 2500.0, 0.2), 0.7)   # 대형 노드가 소형을 튕겨내지 않도록 질량비 압축
 	var pm := PhysicsMaterial.new()
 	pm.friction = 0.7
 	pm.bounce = 0.12
@@ -97,6 +99,11 @@ func squash() -> void:
 	_squash_t = 0.25
 	_sprite.scale = _base_scale * Vector2(1.12, 0.88)
 	create_tween().tween_property(_sprite, "scale", Vector2.ONE * _base_scale, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
+	# 합체 직후 겹침 등으로 인한 폭주(튕겨나감) 방지
+	state.linear_velocity = state.linear_velocity.limit_length(MAX_SPEED)
+	state.angular_velocity = clampf(state.angular_velocity, -MAX_SPIN, MAX_SPIN)
 
 func _physics_process(dt: float) -> void:
 	age += dt

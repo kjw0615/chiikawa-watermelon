@@ -3,7 +3,7 @@ class_name HeadShapes
 ## 단계별 이미지/반지름은 NodeDefs(data/nodes.json)에서 가져온다. 반지름 = 등가 반지름 sqrt(면적/PI).
 
 const STATES := ["neutral", "surprised", "squash", "happy"]
-const EPSILON := 3.0              # 외곽선 단순화 정도(텍스처 px)
+const EPSILON := 6.0              # 외곽선 단순화 정도(텍스처 px)
 
 static var _cache := {}
 

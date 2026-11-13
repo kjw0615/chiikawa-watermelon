@@ -38,6 +38,7 @@ var _auto := false
 
 func _ready() -> void:
 	_auto = "--shot" in OS.get_cmdline_user_args()
+	var verify := "--verify" in OS.get_cmdline_user_args()
 	_build_walls()
 	for i in 8:
 		var p := AudioStreamPlayer.new()
@@ -64,7 +65,9 @@ func _ready() -> void:
 	if cf.load(SAVE_PATH) == OK:
 		best = cf.get_value("game", "best", 0)
 	_new_game()
-	if _auto:
+	if verify:
+		_run_verify()
+	elif _auto:
 		_run_auto()
 
 func _new_game() -> void:
@@ -239,4 +242,31 @@ func _run_auto() -> void:
 	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
 	get_viewport().get_texture().get_image().save_png(path)
 	print("saved ", path, " score=", score, " merges=", merges, " over=", over, " states=", Head.state_counts, " heads=", get_tree().get_nodes_in_group("heads").size())
+	get_tree().quit()
+
+## --verify: 11단계 전부의 알파 외곽선 콜라이더 점검 + 전 단계 동시 낙하 시뮬레이션
+func _run_verify() -> void:
+	var ok := true
+	for st in NodeDefs.count():
+		var d := HeadShapes.get_data(st)
+		var outline: PackedVector2Array = d["outline"]
+		var pieces := Geometry2D.decompose_polygon_in_convex(outline)
+		var eq := sqrt(float(d["area"]) / PI)
+		var good: bool = outline.size() >= 8 and pieces.size() >= 1 and absf(eq - NodeDefs.radius(st)) < 1.0
+		ok = ok and good
+		print("stage %2d %-10s pts=%3d convex=%2d eq_r=%.1f (target %.0f) %s" % [st + 1, NodeDefs.node_name(st), outline.size(), pieces.size(), eq, NodeDefs.radius(st), "OK" if good else "FAIL"])
+	for st in NodeDefs.count():
+		var r := NodeDefs.radius(st)
+		spawn(st, Vector2(randf_range(L + r, R - r), DROP_Y - st * 5.0)).age = 0.0
+		await get_tree().create_timer(0.25).timeout
+	await get_tree().create_timer(4.0).timeout
+	var outside := 0
+	for h: Head in get_tree().get_nodes_in_group("heads"):
+		if h.position.x < L - 10 or h.position.x > R + 10 or h.position.y > FLOOR_Y + 10:
+			outside += 1
+			print("  outside: stage ", h.stage + 1, " pos=", h.position)
+	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
+	get_viewport().get_texture().get_image().save_png(path)
+	print("drop-all: heads=", get_tree().get_nodes_in_group("heads").size(), " merges=", merges, " outside_box=", outside, " over=", over)
+	print("VERIFY ", "PASS" if ok and outside == 0 else "FAIL")
 	get_tree().quit()

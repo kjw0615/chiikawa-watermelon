@@ -17,6 +17,7 @@ window/stretch/mode="canvas_items"
 
 common/physics_ticks_per_second=120
 2d/default_gravity=1400.0
+2d/solver/default_contact_bias=0.3
 
 [rendering]
 
