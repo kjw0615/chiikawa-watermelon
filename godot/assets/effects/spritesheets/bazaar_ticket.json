@@ -1,0 +1,81 @@
+{
+  "texture": "bazaar_ticket.png",
+  "frame_width": 256,
+  "frame_height": 256,
+  "frame_count": 6,
+  "columns": 3,
+  "rows": 2,
+  "hframes": 3,
+  "vframes": 2,
+  "order": "row-major",
+  "fps": 12,
+  "loop": false,
+  "pivot_px": [
+    128,
+    240
+  ],
+  "filter": "linear",
+  "godot_note": "Set Sprite2D hframes=3,vframes=2; frame 0..5. JSON timing is descriptive, not auto-imported.",
+  "frames": [
+    {
+      "index": 0,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "duration_ms": 80
+    },
+    {
+      "index": 1,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "duration_ms": 120
+    },
+    {
+      "index": 2,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "duration_ms": 80
+    },
+    {
+      "index": 3,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "duration_ms": 70
+    },
+    {
+      "index": 4,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "duration_ms": 100
+    },
+    {
+      "index": 5,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "duration_ms": 180
+    }
+  ]
+}

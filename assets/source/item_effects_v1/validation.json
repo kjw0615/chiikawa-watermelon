@@ -1,0 +1,44 @@
+{
+  "food_exact_pixel_matches": 9,
+  "sheets": [
+    {
+      "file": "usagi_shake.png",
+      "size": [
+        768,
+        512
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "aae0dfe111b161ccf6d877587915546813211c41ea9473eb4fe2ec4cbfbe38fd",
+      "validated_frames": 6
+    },
+    {
+      "file": "bazaar_ticket.png",
+      "size": [
+        768,
+        512
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "3811e2dcd5d3c0fa04d0ab77096c9e636dea95b0b0d699789c11ddf266cafa99",
+      "validated_frames": 6
+    },
+    {
+      "file": "rakko_slash.png",
+      "size": [
+        768,
+        512
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "77fef030054d97c93bc0f7875ceae94ed8357c3b652630679b118c5c4f34c321",
+      "validated_frames": 6
+    }
+  ]
+}

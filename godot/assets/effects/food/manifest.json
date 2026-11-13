@@ -1,0 +1,93 @@
+{
+  "source": "art/drafts/food_nine_v1/food-nine-draft-sheet.png",
+  "archived_source": "assets/source/item_effects_v1/masters/food-nine-draft-sheet.png",
+  "frame_size": [
+    64,
+    64
+  ],
+  "order": "left-to-right",
+  "alpha": "preserved from original",
+  "frames": [
+    {
+      "file": "food_01.png",
+      "source_rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_02.png",
+      "source_rect": [
+        64,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_03.png",
+      "source_rect": [
+        128,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_04.png",
+      "source_rect": [
+        192,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_05.png",
+      "source_rect": [
+        256,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_06.png",
+      "source_rect": [
+        320,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_07.png",
+      "source_rect": [
+        384,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_08.png",
+      "source_rect": [
+        448,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "file": "food_09.png",
+      "source_rect": [
+        512,
+        0,
+        64,
+        64
+      ]
+    }
+  ]
+}
