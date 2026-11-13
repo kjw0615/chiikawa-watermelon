@@ -1,0 +1,10 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>아이템 모션 검수</title>
+<style>body{font:16px system-ui;background:#1d2633;color:#f1f5f9;margin:32px}main{display:flex;gap:24px;flex-wrap:wrap}article{background:#303e50;padding:20px;border-radius:18px}canvas{background:repeating-conic-gradient(#e1e6eb 0% 25%,#fff 0% 50%) 0/24px 24px;border-radius:8px;display:block}button{padding:10px;margin:12px 6px 0 0;cursor:pointer}img{image-rendering:auto}small{display:block;max-width:750px;line-height:1.6}</style>
+<h1>아이템 이펙트 v1</h1><small>6프레임 / 3열×2행 / 프레임 256×256. 투명도 검수용 체크 배경입니다. 일회성 모션은 마지막 프레임에서 정지합니다. 우사기는 영상 재생 접근 제한으로 지시된 동작과 공식 캐릭터 이미지 기준으로 제작했습니다.</small>
+<main id="items"></main><h2>음식 9종 · 원본 64×64</h2><div id="food"></div>
+<script>
+const base='../../../godot/assets/effects/';
+const jobs=[['usagi_shake','우사기 엉덩이 흔들기',true,[100,100,100,100,100,100]],['bazaar_ticket','바자회 교환권',false,[80,120,80,70,100,180]],['rakko_slash','랏코 발도·베기',false,[140,70,80,50,100,160]]];
+jobs.forEach(([name,title,loop,times])=>{const a=document.createElement('article');a.innerHTML=`<h2>${title}</h2><canvas width="256" height="256"></canvas><button>처음부터 재생</button><button>다음 프레임</button><p></p>`;items.append(a);const cv=a.querySelector('canvas'),ctx=cv.getContext('2d'),img=new Image(),p=a.querySelector('p');let frame=0,start=0,running=false;function draw(){ctx.clearRect(0,0,256,256);ctx.drawImage(img,(frame%3)*256,Math.floor(frame/3)*256,256,256,0,0,256,256);p.textContent=`프레임 ${frame+1}/6 · ${loop?'루프':'일회성'}`}img.onload=()=>{running=true;start=performance.now();draw()};img.src=base+'spritesheets/'+name+'.png';a.querySelectorAll('button')[0].onclick=()=>{frame=0;start=performance.now();running=true;draw()};a.querySelectorAll('button')[1].onclick=()=>{running=false;frame=(frame+1)%6;draw()};function tick(now){if(running&&now-start>=times[frame]){start=now;if(frame<5)frame++;else if(loop)frame=0;else running=false;draw()}requestAnimationFrame(tick)}requestAnimationFrame(tick)});
+for(let i=1;i<=9;i++){const im=new Image();im.width=64;im.height=64;im.src=base+'food/food_'+String(i).padStart(2,'0')+'.png';im.alt='food '+i;food.append(im)}
+</script></html>
