@@ -9,10 +9,11 @@ const SPEED := 1100.0
 const BLADE := 70.0     # 칼날 길이(아래 방향이 끝)
 const FLOOR_Y := 702.0
 
+var aiming := false   # true 동안은 떨어지지 않고 마우스를 따라다닌다(조준 모드)
 var _done := false
 
 func _physics_process(dt: float) -> void:
-	if _done:
+	if _done or aiming:
 		return
 	position.y += SPEED * dt
 	var tip := global_position + Vector2(0, BLADE)

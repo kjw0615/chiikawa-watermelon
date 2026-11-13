@@ -297,7 +297,10 @@ func _draw() -> void:
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
-		get_tree().quit()   # 언제든 ESC 로 즉시 종료
+		if items.aiming:
+			items.cancel_aim()   # 조준 중 ESC 는 취소(환불)
+		else:
+			get_tree().quit()    # 그 외에는 ESC 로 즉시 종료
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
 		_set_muted(not _muted)
@@ -307,8 +310,12 @@ func _unhandled_input(e: InputEvent) -> void:
 		_new_game()
 	elif e is InputEventKey and e.pressed and e.keycode >= KEY_1 and e.keycode <= KEY_4:
 		items.use_by_index(e.keycode - KEY_1)
+	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_RIGHT:
+		items.cancel_aim()
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-		if over:
+		if items.aiming:
+			items.confirm_aim(e.position.x)
+		elif over:
 			_new_game()
 		elif cooldown <= 0.0:
 			drop(e.position.x)
@@ -334,8 +341,12 @@ func spawn(stage: int, pos: Vector2, vel: Vector2 = Vector2.ZERO) -> Head:
 
 func _on_touched(a: Head, b: Node, speed: float) -> void:
 	if b is Head:
-		if a.stage == b.stage and not a.merging and not b.merging and a.get_instance_id() < b.get_instance_id():
-			_merge.call_deferred(a, b)
+		if a.stage == b.stage and not a.merging and not b.merging:
+			# 어느 쪽 이벤트가 먼저 와도 합체(접촉 슬롯이 찬 노드는 한쪽 이벤트만 올 수 있음). (작은 id, 큰 id)로 정규화하고 _merge 의 merging 가드로 1회만 처리
+			if a.get_instance_id() < b.get_instance_id():
+				_merge.call_deferred(a, b)
+			else:
+				_merge.call_deferred(b, a)
 		elif speed > 120.0:
 			_play("contact", clampf(speed / 600.0, 0.15, 1.0))
 			if speed > 300.0:
@@ -524,7 +535,8 @@ func _process(dt: float) -> void:
 	if mx > drop_l and mx < drop_r:
 		last_play_x = mx
 	_preview.position = Vector2(clampf(mx, drop_l + 20, drop_r - 20), DROP_Y)
-	_preview.visible = state == State.PLAYING and not over and cooldown <= 0.0
+	items.aim_move(mx)
+	_preview.visible = state == State.PLAYING and not over and cooldown <= 0.0 and not items.aiming
 	for p in pops:
 		p["t"] += dt
 	pops = pops.filter(func(p): return p["t"] < 0.3)
@@ -655,6 +667,11 @@ func _item_test() -> bool:
 		if id == "sword" and heads.size() > 0:
 			last_play_x = (heads[randi() % heads.size()] as Head).position.x
 		var used := items.use(id)
+		if id == "sword":
+			var aim_ok := items.aiming
+			items.confirm_aim(last_play_x)
+			print("sword aim mode entered/confirmed %s" % ["OK" if aim_ok else "FAIL"])
+			all_ok = all_ok and aim_ok
 		var t := 0.0
 		while items.busy and t < 8.0:
 			await get_tree().create_timer(0.1).timeout
@@ -668,6 +685,9 @@ func _item_test() -> bool:
 		if id == "swap":
 			good = good and next_stage != prev_next and next_stage <= NodeDefs.drop_max_index() and is_equal_approx(items.gauge, 70.0)
 			extra = " next %d->%d gauge=%.0f" % [prev_next + 1, next_stage + 1, items.gauge]
+		elif id == "fountain":
+			good = good and items.fountain_peak_y < 420.0 and items.fountain_peak_y > 120.0
+			extra = " peak_y=%.0f (target ~350-400)" % items.fountain_peak_y
 		elif id == "sword":
 			var left := 0
 			if items.last_sword_stage >= 0:
@@ -678,6 +698,13 @@ func _item_test() -> bool:
 			extra = " target_stage=%d heads %d->%d left_same=%d gauge=%.0f" % [items.last_sword_stage + 1, before, after, left, items.gauge]
 		print("item %-8s used=%s outside=%d moving=%d/%d%s %s" % [id, used, outside, moving, after, extra, "OK" if good else "FAIL"])
 		all_ok = all_ok and good
+	# 명검 조준 취소 시 환불
+	items.gauge = 100.0
+	items.use("sword")
+	items.cancel_aim()
+	var cancel_ok := not items.aiming and not items.busy and is_equal_approx(items.gauge, 100.0)
+	print("sword aim cancel refund gauge=%.0f %s" % [items.gauge, "OK" if cancel_ok else "FAIL"])
+	all_ok = all_ok and cancel_ok
 	# 게이지 부족 시 사용 불가 / 비용 차감
 	items.gauge = 20.0
 	var denied := not items.use("swap")

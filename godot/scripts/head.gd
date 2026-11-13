@@ -53,7 +53,7 @@ func setup(st: int) -> void:
 	linear_damp = LINEAR_DAMP
 	continuous_cd = RigidBody2D.CCD_MODE_DISABLED   # 레이캐스트 CCD가 다조각 오목 콜라이더 더미에서 폭주를 유발해 끔(속도 상한+두꺼운 벽으로 터널링 방지)
 	contact_monitor = true
-	max_contacts_reported = 6
+	max_contacts_reported = 48   # 접촉점 수 기준: 다조각 노드(카니 등)도 포화되지 않게
 	body_entered.connect(func(b: Node): touched.emit(self, b, _last_vel.length()))
 
 	# 콜라이더: 오목 외곽선 -> 볼록 조각들

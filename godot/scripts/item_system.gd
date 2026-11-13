@@ -9,9 +9,12 @@ const SHAKE_PULSES := 3
 const SHAKE_INTERVAL := 0.18
 const SHAKE_SPEED := 260.0      # 좌우 반발 펄스 속도(px/s)
 const SHAKE_UP := 140.0
-const FOUNTAIN_TIME := 1.6
+const FOUNTAIN_TIME := 3.0
 const FOUNTAIN_HALF_W := 130.0  # 분수 영향 반폭(px)
-const FOUNTAIN_UP_ACC := 2100.0 # 중력(1400)을 이겨 둥실 솟게 하는 상향 가속(px/s^2)
+const FOUNTAIN_UP_ACC := 4200.0 # 중력(1400)을 크게 이겨 솟구치게 하는 상향 가속(px/s^2)
+const FOUNTAIN_CEIL_Y := 400.0  # 이 높이(화면 중간 부근) 위로는 힘이 사라지고 위로 가는 속도가 감쇠
+const FOUNTAIN_FADE := 90.0
+const FOUNTAIN_MAX_UP := 1000.0 # 위쪽 속도 상한(상자 밖 이탈 방지)
 const FOUNTAIN_SIDE_ACC := 520.0
 
 var main: Node2D
@@ -20,6 +23,7 @@ var busy := false
 var suppress_over := false     # 분수 동안 게임오버 카운트다운 일시정지
 var last_sword_stage := -1
 var _fountain_t := 0.0
+var fountain_peak_y := 9999.0   # 분수 중 노드가 도달한 가장 높은 y(검증용)
 var _particles: CPUParticles2D
 
 func add_gauge_for_stage(stage_no: int) -> void:
@@ -29,6 +33,7 @@ func add_gauge_for_stage(stage_no: int) -> void:
 func reset() -> void:
 	gauge = 0.0
 	busy = false
+	cancel_aim(false)
 	suppress_over = false
 	_fountain_t = 0.0
 	changed.emit()
@@ -82,16 +87,46 @@ func _shake() -> void:
 	busy = false
 	changed.emit()
 
-# ③ 명검 투하: 마지막으로 마우스가 있던 x에서 검이 낙하, 닿은 노드와 같은 단계 전원 삭제
+# ③ 명검 투하: 조준 모드(대기 노드 대신 검이 마우스를 따라다님) -> 클릭한 x에서 낙하, 닿은 노드와 같은 단계 전원 삭제
+#    우클릭/ESC 로 취소하면 비용 환불
+var aiming := false
+var _aim_sword: Sword
+
 func _sword() -> void:
 	busy = true
+	aiming = true
+	_aim_sword = Sword.new()
+	_aim_sword.aiming = true
+	_aim_sword.z_index = 30
+	_aim_sword.position = Vector2(clampf(main.last_play_x, main.L + 20.0, main.R - 20.0), main.DROP_Y)
+	_aim_sword.hit.connect(_on_sword_hit)
+	_aim_sword.fizzled.connect(_on_sword_fizzled)
+	main.add_child(_aim_sword)
 	changed.emit()
-	var sw := Sword.new()
-	sw.position = Vector2(clampf(main.last_play_x, main.L + 20.0, main.R - 20.0), main.DROP_Y - 40.0)
-	sw.z_index = 30
-	sw.hit.connect(_on_sword_hit)
-	sw.fizzled.connect(_on_sword_fizzled)
-	main.add_child(sw)
+
+func aim_move(x: float) -> void:
+	if aiming and is_instance_valid(_aim_sword):
+		_aim_sword.position = Vector2(clampf(x, main.drop_l + 20.0, main.drop_r - 20.0), main.DROP_Y)
+
+func confirm_aim(x: float) -> void:
+	if not aiming:
+		return
+	aim_move(x)
+	aiming = false
+	_aim_sword.aiming = false
+	_aim_sword = null
+
+func cancel_aim(refund := true) -> void:
+	if not aiming:
+		return
+	aiming = false
+	if is_instance_valid(_aim_sword):
+		_aim_sword.queue_free()
+	_aim_sword = null
+	if refund:
+		gauge = minf(gauge + cost("sword"), ItemDefs.gauge_max())
+	busy = false
+	changed.emit()
 
 func _on_sword_hit(target: Head) -> void:
 	last_sword_stage = target.stage
@@ -120,6 +155,7 @@ func _fountain() -> void:
 	busy = true
 	suppress_over = true
 	_fountain_t = FOUNTAIN_TIME
+	fountain_peak_y = 9999.0
 	if _particles == null:
 		_particles = _make_particles()
 		main.add_child(_particles)
@@ -166,8 +202,15 @@ func _physics_process(dt: float) -> void:
 		if w <= 0.0:
 			continue
 		h.sleeping = false
-		var acc := Vector2(signf(dx) * FOUNTAIN_SIDE_ACC * w, -FOUNTAIN_UP_ACC * w)
+		var lift := clampf((h.position.y - FOUNTAIN_CEIL_Y) / FOUNTAIN_FADE, 0.0, 1.0)   # 높이 제한: 천장 근처에서 힘이 0
+		var acc := Vector2(signf(dx) * FOUNTAIN_SIDE_ACC * w, -FOUNTAIN_UP_ACC * w * lift)
 		h.apply_central_force(acc * h.mass * ramp)
+		var v: Vector2 = h.linear_velocity
+		if h.position.y < FOUNTAIN_CEIL_Y and v.y < 0.0:
+			v.y *= 0.85
+		v.y = maxf(v.y, -FOUNTAIN_MAX_UP)
+		h.linear_velocity = v
+		fountain_peak_y = minf(fountain_peak_y, h.position.y)
 	if _fountain_t <= 0.0:
 		_particles.emitting = false
 		suppress_over = false
