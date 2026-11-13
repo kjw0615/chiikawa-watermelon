@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>치이카와 수박게임</title>
+<style>
+  :root { --bg:#dfe6ff; --wall:#fff7e0; --ink:#5a4a6a; --accent:#f08aa8; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(#b9c4f5,#f4f0ff); font-family:"Malgun Gothic",sans-serif; color:var(--ink);
+    user-select:none; -webkit-user-select:none; touch-action:none; }
+  #wrap { display:flex; gap:16px; align-items:flex-start; padding:12px; }
+  #side { width:150px; display:flex; flex-direction:column; gap:10px; }
+  .card { background:#fff; border-radius:14px; padding:10px 12px; box-shadow:0 3px 0 #c9cdee; }
+  .card h3 { margin:0 0 4px; font-size:12px; color:#9a8fb0; font-weight:700; }
+  .card .v { font-size:24px; font-weight:800; }
+  #next { width:64px; height:64px; display:block; margin:0 auto; }
+  #ladder { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; }
+  #ladder img { width:24px; height:24px; border-radius:50%; background:#f3f0ff; }
+  canvas { background:var(--wall); border-radius:14px; box-shadow:0 4px 0 #c9cdee; max-height:94vh; }
+  button { font:inherit; font-weight:800; border:0; border-radius:12px; padding:10px; background:var(--accent);
+    color:#fff; cursor:pointer; box-shadow:0 3px 0 #c8708a; }
+  @media (max-width:640px){ #wrap{flex-direction:column;align-items:center} #side{width:100%;flex-direction:row;flex-wrap:wrap}
+    #side .card{flex:1 1 90px} canvas{width:92vw;height:auto} }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="400" height="640"></canvas>
+  <div id="side">
+    <div class="card"><h3>점수</h3><div class="v" id="score">0</div></div>
+    <div class="card"><h3>최고 점수</h3><div class="v" id="best">0</div></div>
+    <div class="card"><h3>다음</h3><canvas id="next" width="64" height="64" style="background:none;box-shadow:none"></canvas></div>
+    <div class="card"><h3>진화 순서</h3><div id="ladder"></div></div>
+    <button id="restart">다시 시작</button>
+  </div>
+</div>
+<script>
+// 작은 것 → 큰 것 (같은 캐릭터끼리 합치면 다음 단계로 진화)
+const SRC = ['img/h.png','img/g.png','img/i.png','img/e.png','img/f.png','img/d.png','img/j.png','img/b.png','img/a.png','img/c.png','img/k.svg'];
+const RAD = [17,23,30,37,45,54,64,75,88,102,118];
+const W = 400, H = 640, TOP = 110;          // TOP: 게임오버 라인 y
+const GRAV = 0.35, SUB = 4;
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const nx = document.getElementById('next').getContext('2d');
+const imgs = SRC.map(s => { const i = new Image(); i.onload = () => balls && ui(); i.src = s; return i; });
+
+let balls, score, best, cur, nextLv, mx, cooldown, over, pops, overTimer;
+try { best = +localStorage.getItem('chiikawa-best') || 0; } catch(e) { best = 0; }
+
+const ladder = document.getElementById('ladder');
+SRC.forEach(s => { const i = new Image(); i.src = s; ladder.appendChild(i); });
+
+function rndLv() { return Math.floor(Math.random() * 5); }
+function reset() {
+  balls = []; pops = []; score = 0; over = false; overTimer = 0; cooldown = 0;
+  mx = W / 2; cur = rndLv(); nextLv = rndLv(); ui();
+}
+function ui() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('best').textContent = best;
+  nx.clearRect(0, 0, 64, 64);
+  const d = Math.min(60, 60 * (RAD[nextLv] / RAD[4]) + 22);
+  nx.drawImage(imgs[nextLv], 32 - d / 2, 32 - d / 2, d, d);
+}
+function drop() {
+  if (over || cooldown > 0) return;
+  const r = RAD[cur], x = Math.max(r, Math.min(W - r, mx));
+  balls.push({ x, y: TOP - 30, vx: 0, vy: 0, lv: cur, r, a: 0, w: 0, age: 0, scale: 1 });
+  cur = nextLv; nextLv = rndLv(); cooldown = 28; ui();
+}
+
+function step() {
+  if (cooldown > 0) cooldown--;
+  for (let s = 0; s < SUB; s++) {
+    for (const b of balls) {
+      b.vy += GRAV / SUB; b.vx *= 0.999; b.vy *= 0.999;
+      b.x += b.vx / SUB * 1; b.y += b.vy / SUB * 1;
+      b.a += b.w / SUB; b.w *= 0.995;
+      if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * 0.2; b.w *= 0.9; }
+      if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx) * 0.2; b.w *= 0.9; }
+      if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy) * 0.15; b.vx *= 0.97; b.w = b.vx / b.r; }
+    }
+    const merges = [];
+    for (let i = 0; i < balls.length; i++) for (let j = i + 1; j < balls.length; j++) {
+      const p = balls[i], q = balls[j];
+      const dx = q.x - p.x, dy = q.y - p.y, min = p.r + q.r;
+      if (dx * dx + dy * dy >= min * min) continue;
+      const d = Math.sqrt(dx * dx + dy * dy) || 0.001, nxn = dx / d, nyn = dy / d;
+      if (p.lv === q.lv && !p.dead && !q.dead && p.lv < RAD.length) { p.dead = q.dead = true; merges.push([p, q]); continue; }
+      const mp = p.r * p.r, mq = q.r * q.r, tot = mp + mq, ov = min - d;
+      p.x -= nxn * ov * mq / tot; p.y -= nyn * ov * mq / tot;
+      q.x += nxn * ov * mp / tot; q.y += nyn * ov * mp / tot;
+      const rv = (q.vx - p.vx) * nxn + (q.vy - p.vy) * nyn;
+      if (rv < 0) {
+        const jn = -(1.15) * rv / (1 / mp + 1 / mq);
+        p.vx -= jn * nxn / mp; p.vy -= jn * nyn / mp; q.vx += jn * nxn / mq; q.vy += jn * nyn / mq;
+        const tv = (q.vx - p.vx) * -nyn + (q.vy - p.vy) * nxn;   // 접선 마찰 → 회전
+        p.w += tv * 0.01 / p.r * 8 * q.r / min; q.w += tv * 0.01 / q.r * 8 * p.r / min;
+        p.vx += -nyn * tv * 0.02; p.vy += nxn * tv * 0.02; q.vx -= -nyn * tv * 0.02; q.vy -= nxn * tv * 0.02;
+      }
+    }
+    for (const [p, q] of merges) {
+      balls.splice(balls.indexOf(p), 1); balls.splice(balls.indexOf(q), 1);
+      const lv = p.lv + 1, x = (p.x + q.x) / 2, y = (p.y + q.y) / 2;
+      score += (p.lv + 1) * 2 + (lv >= RAD.length ? 100 : 0);
+      pops.push({ x, y, r: RAD[Math.min(lv, RAD.length - 1)], t: 0 });
+      if (lv < RAD.length) balls.push({ x, y, vx: (p.vx + q.vx) / 2, vy: (p.vy + q.vy) / 2, lv, r: RAD[lv], a: 0, w: 0, age: 0, scale: 0.6 });
+      if (score > best) { best = score; try { localStorage.setItem('chiikawa-best', best); } catch(e) {} }
+      ui();
+    }
+  }
+  for (const b of balls) { b.age++; if (b.scale < 1) b.scale = Math.min(1, b.scale + 0.08); }
+  // 게임오버: 라인 위에 정지한 공이 일정 시간 유지되면
+  const danger = balls.some(b => b.age > 60 && b.y - b.r < TOP && Math.abs(b.vy) < 0.6);
+  overTimer = danger ? overTimer + 1 : 0;
+  if (overTimer > 120 && !over) over = true;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fff7e0'; ctx.fillRect(0, 0, W, H);
+  // 게임오버 라인
+  ctx.setLineDash([8, 6]); ctx.strokeStyle = overTimer ? '#e0506a' : '#e7b9c4'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, TOP); ctx.lineTo(W, TOP); ctx.stroke(); ctx.setLineDash([]);
+  // 조준
+  if (!over) {
+    const r = RAD[cur], x = Math.max(r, Math.min(W - r, mx));
+    ctx.strokeStyle = 'rgba(150,130,190,.35)'; ctx.setLineDash([4, 6]);
+    ctx.beginPath(); ctx.moveTo(x, TOP - 30); ctx.lineTo(x, H); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = cooldown > 0 ? 0.35 : 1;
+    ctx.drawImage(imgs[cur], x - r, TOP - 30 - r, r * 2, r * 2); ctx.globalAlpha = 1;
+  }
+  for (const b of balls) {
+    const r = b.r * b.scale;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a);
+    ctx.drawImage(imgs[b.lv], -r, -r, r * 2, r * 2);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#5a4a6a'; ctx.beginPath(); ctx.arc(0, 0, r - 1, 0, 7); ctx.stroke();
+    ctx.restore();
+  }
+  for (const p of pops) {
+    const k = p.t / 18; ctx.globalAlpha = 1 - k; ctx.strokeStyle = '#f08aa8'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (0.8 + k * 0.6), 0, 7); ctx.stroke(); ctx.globalAlpha = 1; p.t++;
+  }
+  pops = pops.filter(p => p.t < 18);
+  if (over) {
+    ctx.fillStyle = 'rgba(60,40,90,.6)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.font = 'bold 40px "Malgun Gothic"'; ctx.fillText('게임 오버', W / 2, H / 2 - 20);
+    ctx.font = 'bold 22px "Malgun Gothic"'; ctx.fillText('점수 ' + score, W / 2, H / 2 + 20);
+    ctx.font = '16px "Malgun Gothic"'; ctx.fillText('클릭하거나 Enter로 다시 시작', W / 2, H / 2 + 56);
+  }
+}
+
+function loop() { if (!over) step(); draw(); requestAnimationFrame(loop); }
+
+function pos(e) { const r = cv.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e; return (t.clientX - r.left) * W / r.width; }
+cv.addEventListener('mousemove', e => mx = pos(e));
+cv.addEventListener('touchmove', e => { mx = pos(e); e.preventDefault(); }, { passive: false });
+cv.addEventListener('touchstart', e => { mx = pos(e); e.preventDefault(); }, { passive: false });
+cv.addEventListener('mouseup', () => over ? reset() : drop());
+cv.addEventListener('touchend', e => { e.preventDefault(); over ? reset() : drop(); }, { passive: false });
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') mx -= 14; else if (e.key === 'ArrowRight') mx += 14;
+  else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); over ? reset() : drop(); }
+  mx = Math.max(0, Math.min(W, mx));
+});
+document.getElementById('restart').onclick = reset;
+reset(); loop();
+</script>
+</body>
+</html>

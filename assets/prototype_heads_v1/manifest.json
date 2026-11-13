@@ -1,0 +1,283 @@
+{
+  "version": 1,
+  "mode": "built-in image_gen",
+  "images": {
+    "chiikawa": {
+      "suggested_neutral_pivot_px": [
+        645.0,
+        736.1999999999999
+      ],
+      "states": {
+        "neutral": {
+          "file": "chiikawa/neutral.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            109,
+            175,
+            1181,
+            1095
+          ],
+          "transparent_fraction": 0.4892,
+          "sha256": "aced97488e3f106d248faf635da8d19913ff53e3a40e727fb2cfa3a569a94b92",
+          "silhouette_iou_vs_neutral": 1.0
+        },
+        "surprised": {
+          "file": "chiikawa/surprised.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            106,
+            172,
+            1183,
+            1096
+          ],
+          "transparent_fraction": 0.4813,
+          "sha256": "72b11dabb10f79e09e18744cd4e73758ee69a586de88d79ab75193995e72759e",
+          "silhouette_iou_vs_neutral": 0.9924
+        },
+        "squash": {
+          "file": "chiikawa/squash.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            108,
+            173,
+            1183,
+            1098
+          ],
+          "transparent_fraction": 0.4796,
+          "sha256": "55a77c909c764241196756b7df2b12cbc30dc8041a87183d1f4e0a7af2835877",
+          "silhouette_iou_vs_neutral": 0.9937
+        },
+        "happy": {
+          "file": "chiikawa/happy.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            108,
+            173,
+            1182,
+            1097
+          ],
+          "transparent_fraction": 0.4794,
+          "sha256": "1e01b44d81ce5bea853a4e84ee25b003d1fc032aea5a18eb138d6a6b2e61b71d",
+          "silhouette_iou_vs_neutral": 0.9949
+        }
+      }
+    },
+    "hachiware": {
+      "suggested_neutral_pivot_px": [
+        654.0,
+        743.71
+      ],
+      "states": {
+        "neutral": {
+          "file": "hachiware/neutral.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            72,
+            127,
+            1236,
+            1138
+          ],
+          "transparent_fraction": 0.4044,
+          "sha256": "89581f676b0d539955c45edcb386fdc956c93b438f2751848a31ae15965d2d74",
+          "silhouette_iou_vs_neutral": 1.0
+        },
+        "surprised": {
+          "file": "hachiware/surprised.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            71,
+            124,
+            1238,
+            1140
+          ],
+          "transparent_fraction": 0.4044,
+          "sha256": "df8eaeedee3c7764b1668a5c3482f0476c03c51228d07b551c669b7e3cc976e2",
+          "silhouette_iou_vs_neutral": 0.9934
+        },
+        "squash": {
+          "file": "hachiware/squash.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            69,
+            123,
+            1239,
+            1141
+          ],
+          "transparent_fraction": 0.3947,
+          "sha256": "ffeac0ad39206b029695c69d9543148d2e50dda5c42606d3ffe77c84ffb092b2",
+          "silhouette_iou_vs_neutral": 0.991
+        },
+        "happy": {
+          "file": "hachiware/happy.png",
+          "size": [
+            1312,
+            1199
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            70,
+            122,
+            1238,
+            1139
+          ],
+          "transparent_fraction": 0.4014,
+          "sha256": "2d58e86d3f86c9fbbb0e8ddd1748aa5ca7008a121e6567cb5e1ad85dd08451bd",
+          "silhouette_iou_vs_neutral": 0.9921
+        }
+      }
+    },
+    "usagi": {
+      "suggested_neutral_pivot_px": [
+        615.5,
+        940.64
+      ],
+      "states": {
+        "neutral": {
+          "file": "usagi/neutral.png",
+          "size": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            184,
+            69,
+            1047,
+            1201
+          ],
+          "transparent_fraction": 0.5194,
+          "sha256": "98c96e8f36d7ca7c79acbb71f21ba3dcf23db018ccd8a0f892e7320a14741264",
+          "silhouette_iou_vs_neutral": 1.0
+        },
+        "surprised": {
+          "file": "usagi/surprised.png",
+          "size": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            181,
+            68,
+            1049,
+            1202
+          ],
+          "transparent_fraction": 0.514,
+          "sha256": "c9af80239c66f26622a66d42d98e04ac03d8aa1c1c9431252dd364368f6e540e",
+          "silhouette_iou_vs_neutral": 0.9903
+        },
+        "squash": {
+          "file": "usagi/squash.png",
+          "size": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            181,
+            68,
+            1049,
+            1202
+          ],
+          "transparent_fraction": 0.5132,
+          "sha256": "3f17eabb61d3461b4f02bec8baeb3ca4604c4e7dddb0b0d0b3a112d549ef29d5",
+          "silhouette_iou_vs_neutral": 0.9913
+        },
+        "happy": {
+          "file": "usagi/happy.png",
+          "size": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_range": [
+            0,
+            255
+          ],
+          "bbox_alpha_128": [
+            181,
+            66,
+            1050,
+            1202
+          ],
+          "transparent_fraction": 0.462,
+          "sha256": "43904a40801cca5d75af05ab1eb9c3f1d9d9838e801aa851efb4e92f9851a70b",
+          "silhouette_iou_vs_neutral": 0.9863
+        }
+      }
+    }
+  },
+  "warnings": []
+}

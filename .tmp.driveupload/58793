@@ -1,0 +1,9 @@
+# Godot 4 cache & local files
+godot/.godot/
+*.import
+*.tmp
+
+# AI agent private instruction files (not shared across agents)
+GEMINI.md
+CLAUDE.md
+AGENTS.md
