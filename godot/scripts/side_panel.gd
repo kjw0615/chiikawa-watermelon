@@ -1,13 +1,14 @@
 class_name SidePanel
 extends Control
-## 오른쪽 UI: NEXT(다음 노드) 박스 + 합쳐지는 노드 순서(1~11단계 진화표).
+## 오른쪽 UI: 점수 + NEXT(다음 노드) + 합쳐지는 노드 순서(1~11단계 진화표, 2줄 미니 원형 아이콘).
 
-const COLS := 4
-const ICON := 44.0
+const COLS := 6
+const CELL := 40.0
 
 var _next_icon: TextureRect
 var _next_name: Label
 var _next_stage_label: Label
+var _score_label: Label
 
 func _ready() -> void:
 	var bg := Panel.new()
@@ -15,57 +16,77 @@ func _ready() -> void:
 	bg.add_theme_stylebox_override("panel", _box(Color("fffaff"), Color("c9bfe8"), 14))
 	add_child(bg)
 
-	_add_title("NEXT", Vector2(0, 10))
+	# 점수(최고점수는 표기하지 않음)
+	_add_title("SCORE", Vector2(0, 10), 14)
+	_score_label = _label(Vector2(0, 28), 36)
+	_score_label.size = Vector2(size.x, 46)
+	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_score_label.add_theme_color_override("font_color", Color("c2477f"))
+	add_child(_score_label)
+	_divider(86.0)
+
+	_add_title("NEXT", Vector2(0, 96), 16)
 	var next_box := Panel.new()
-	next_box.position = Vector2(60, 40)
-	next_box.size = Vector2(100, 100)
+	next_box.position = Vector2((size.x - 84.0) / 2.0, 122)
+	next_box.size = Vector2(84, 84)
 	next_box.add_theme_stylebox_override("panel", _box(Color("f0e9ff"), Color("b3a5d6"), 12))
 	add_child(next_box)
-	_next_icon = _icon_rect(Vector2(8, 8), Vector2(84, 84))
+	_next_icon = _icon_rect(Vector2(6, 6), Vector2(72, 72))
 	next_box.add_child(_next_icon)
-	_next_stage_label = _label(Vector2(0, 144), 15)
+	_next_stage_label = _label(Vector2(0, 210), 14)
 	_next_stage_label.size = Vector2(size.x, 20)
 	_next_stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_next_stage_label)
-	_next_name = _label(Vector2(0, 164), 14)
+	_next_name = _label(Vector2(0, 230), 13)
 	_next_name.size = Vector2(size.x, 20)
 	_next_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_next_name)
+	_divider(262.0)
 
-	_add_title("합쳐지는 노드 순서", Vector2(0, 202))
-	var cell_w := (size.x - 20.0) / COLS
+	_add_title("합쳐지는 순서", Vector2(0, 272), 16)
+	var x0 := (size.x - COLS * CELL) / 2.0
 	for i in NodeDefs.count():
-		var cell := Panel.new()
-		cell.position = Vector2(10 + (i % COLS) * cell_w, 234 + (i / COLS) * 78)
-		cell.size = Vector2(cell_w - 4, 72)
 		var droppable := i <= NodeDefs.drop_max_index()
-		cell.add_theme_stylebox_override("panel", _box(Color("ffe9f1") if droppable else Color("f0e9ff"), Color("e3d9f5"), 8))
-		cell.tooltip_text = NodeDefs.node_name(i)
+		var cell := Panel.new()
+		cell.position = Vector2(x0 + (i % COLS) * CELL + 1, 302 + (i / COLS) * 60.0)
+		cell.size = Vector2(CELL - 2.0, CELL - 2.0)
+		cell.tooltip_text = "%d. %s" % [i + 1, NodeDefs.node_name(i)]
+		var sb := _box(Color("ffe3ee") if droppable else Color("ece4fb"), Color("f08fb5") if droppable else Color("b79bf0"), 19)
+		cell.add_theme_stylebox_override("panel", sb)   # 둥근 미니 원형 뱃지
 		add_child(cell)
-		var icon := _icon_rect(Vector2(4, 3), Vector2(cell.size.x - 8, ICON))
+		var icon := _icon_rect(Vector2(4, 4), cell.size - Vector2(8, 8))
 		icon.texture = HeadShapes.get_data(i)["tex"]
 		cell.add_child(icon)
-		var num := _label(Vector2(0, 50), 14)
-		num.size = Vector2(cell.size.x, 20)
+		var num := _label(Vector2(x0 + (i % COLS) * CELL, 302 + (i / COLS) * 60.0 + CELL - 3.0), 11)
+		num.size = Vector2(CELL, 16)
 		num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		num.text = "%d%s" % [i + 1, "★" if i == NodeDefs.count() - 1 else ""]
-		cell.add_child(num)
-	var rows := ceili(NodeDefs.count() / float(COLS))
-	var note := _label(Vector2(10, 234 + rows * 78 + 6), 12)
-	note.size = Vector2(size.x - 20, 60)
+		add_child(num)
+	var note := _label(Vector2(14, 424), 12)
+	note.size = Vector2(size.x - 28, 56)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = "분홍: 1~%d단계 랜덤 드롭\n보라: %d~%d단계는 합체로만 생성\n%d단계끼리 합체 시 소멸 +100점" % [
-		NodeDefs.drop_max_index() + 1, NodeDefs.drop_max_index() + 2, NodeDefs.count(), NodeDefs.count()]
+	note.add_theme_color_override("font_color", Color("7a6da3"))
+	note.text = "분홍 1~%d단계: 랜덤 드롭 / 보라: 합체로만 생성\n%d단계끼리 합체 시 소멸 +100점" % [NodeDefs.drop_max_index() + 1, NodeDefs.count()]
 	add_child(note)
+
+func set_score(v: int) -> void:
+	_score_label.text = str(v)
 
 func set_next(stage: int) -> void:
 	_next_icon.texture = HeadShapes.get_data(stage)["tex"]
 	_next_stage_label.text = "%d단계" % (stage + 1)
 	_next_name.text = NodeDefs.node_name(stage)
 
-func _add_title(t: String, pos: Vector2) -> void:
-	var l := _label(pos, 18)
-	l.size = Vector2(size.x, 28)
+func _divider(y: float) -> void:
+	var d := ColorRect.new()
+	d.color = Color("e3d9f5")
+	d.position = Vector2(16, y)
+	d.size = Vector2(size.x - 32, 2)
+	add_child(d)
+
+func _add_title(t: String, pos: Vector2, font_size := 16) -> void:
+	var l := _label(pos, font_size)
+	l.size = Vector2(size.x, 26)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.text = t
 	add_child(l)
@@ -79,10 +100,10 @@ func _label(pos: Vector2, font_size: int) -> Label:
 
 func _icon_rect(pos: Vector2, sz: Vector2) -> TextureRect:
 	var t := TextureRect.new()
-	t.position = pos
-	t.size = sz
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.position = pos
+	t.size = sz
 	return t
 
 func _box(fill: Color, border: Color, radius: int) -> StyleBoxFlat:

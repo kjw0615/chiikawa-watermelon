@@ -5,10 +5,9 @@ extends Control
 
 signal use_requested(id: String)
 
-const GAUGE_H := 24.0
-const BTN_W := 111.0
-const BTN_H := 52.0
-const GAP := 8.0
+const GAUGE_H := 26.0
+const BTN_H := 60.0
+const GAP := 10.0
 
 var _items: ItemSystem
 var _fill := 0.0
@@ -31,14 +30,17 @@ func setup(items: ItemSystem) -> void:
 	for i in its.size():
 		var it: Dictionary = its[i]
 		var btn := _make_button(i, it)
-		btn.position = Vector2((i % 2) * (BTN_W + GAP), GAUGE_H + GAP + (i / 2) * (BTN_H + 6.0))
+		btn.position = Vector2((i % 2) * (_btn_w() + GAP), GAUGE_H + GAP + (i / 2) * (BTN_H + GAP))
 		add_child(btn)
 		_buttons[it["id"]] = btn
 	refresh()
 
+func _btn_w() -> float:
+	return (size.x - GAP) / 2.0
+
 func _make_button(i: int, it: Dictionary) -> Button:
 	var btn := Button.new()
-	btn.size = Vector2(BTN_W, BTN_H)
+	btn.size = Vector2(_btn_w(), BTN_H)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.tooltip_text = "%s (%d%%)" % [it["full_name"], int(it["cost"])]
 	btn.add_theme_stylebox_override("normal", _box(Color("fff0f6"), Color("e9a9c6")))
@@ -50,8 +52,8 @@ func _make_button(i: int, it: Dictionary) -> Button:
 
 	# 아이콘 자리(36x36): 아이콘 파일이 있으면 그것을, 없으면 임시 글자
 	var slot := Panel.new()
-	slot.position = Vector2(6, 8)
-	slot.size = Vector2(36, 36)
+	slot.position = Vector2(8, 10)
+	slot.size = Vector2(40, 40)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_theme_stylebox_override("panel", _box(Color("fffaff"), Color("d9cbee"), 8))
 	btn.add_child(slot)
@@ -66,12 +68,12 @@ func _make_button(i: int, it: Dictionary) -> Button:
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(tr)
 	else:
-		slot.add_child(_label(it.get("glyph", "?"), Vector2(0, 5), Vector2(36, 26), 18, Color("a45a85"), true))
+		slot.add_child(_label(it.get("glyph", "?"), Vector2(0, 6), Vector2(40, 28), 20, Color("a45a85"), true))
 
-	var nm := _label(it["name"], Vector2(44, 4), Vector2(64, 30), 11, Color("4b3f72"), false)
+	var nm := _label(it["name"], Vector2(52, 6), Vector2(_btn_w() - 56.0, 30), 12, Color("4b3f72"), false)
 	nm.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	btn.add_child(nm)
-	btn.add_child(_label("%d%%" % int(it["cost"]), Vector2(44, 32), Vector2(64, 18), 12, Color("c2477f"), false))
+	btn.add_child(_label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, Color("c2477f"), false))
 	# 단축키 배지(좌상단)
 	var badge := Panel.new()
 	badge.position = Vector2(-2, -2)

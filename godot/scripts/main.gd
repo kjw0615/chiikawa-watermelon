@@ -60,7 +60,6 @@ var combo := 0
 var combo_t := 0.0
 var merges := 0
 var pops: Array = []
-var _label: Label
 var _over_label: Label
 var _panel: SidePanel
 var _preview: Sprite2D
@@ -101,12 +100,6 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_players.append(p)
-	_label = Label.new()
-	_label.position = Vector2(10, 8)
-	_label.add_theme_color_override("font_color", Color("ffffff"))
-	_label.add_theme_color_override("font_outline_color", Color("2d2552"))
-	_label.add_theme_constant_override("outline_size", 5)
-	add_child(_label)
 	_over_label = Label.new()
 	_over_label.position = Vector2(drop_l, 300)
 	_over_label.size = Vector2(drop_r - drop_l, 100)
@@ -118,8 +111,8 @@ func _ready() -> void:
 	_over_label.z_index = 50
 	add_child(_over_label)
 	_panel = SidePanel.new()
-	_panel.position = Vector2(480, 20)
-	_panel.size = Vector2(230, 700)
+	_panel.position = Vector2(520, 16)
+	_panel.size = Vector2(264, 700)
 	_panel.z_index = 40
 	add_child(_panel)
 	_preview = Sprite2D.new()
@@ -130,8 +123,8 @@ func _ready() -> void:
 	items.main = self
 	add_child(items)
 	_skill_bar = SkillBar.new()
-	_skill_bar.position = Vector2(480, 566)
-	_skill_bar.size = Vector2(230, 150)
+	_skill_bar.position = Vector2(532, 500)
+	_skill_bar.size = Vector2(240, 190)
 	_skill_bar.z_index = 41
 	add_child(_skill_bar)
 	_skill_bar.setup(items)
@@ -150,7 +143,7 @@ func _ready() -> void:
 		_set_state(State.PLAYING)   # 자체 테스트는 타이틀을 건너뜀
 	else:
 		_title = TitleScreen.new()
-		_title.size = Vector2(730, 800)
+		_title.size = Vector2(800, 800)
 		add_child(_title)
 		_title.start_pressed.connect(_start_game)
 		_set_state(State.TITLE)
@@ -179,7 +172,7 @@ func _build_credit() -> void:
 func _set_state(st: State) -> void:
 	state = st
 	var playing := st == State.PLAYING
-	for n in [_panel, _skill_bar, _audio_box, _label, _credit]:
+	for n in [_panel, _skill_bar, _audio_box, _credit]:
 		n.visible = playing
 	if not playing:
 		_over_label.text = ""
@@ -303,6 +296,9 @@ func _draw() -> void:
 		draw_arc(p["pos"], p["r"] * (1.0 + k * 0.6), 0, TAU, 32, Color(1, 0.55, 0.7, 1.0 - k), 4.0)
 
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
+		get_tree().quit()   # 언제든 ESC 로 즉시 종료
+		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
 		_set_muted(not _muted)
 	elif state != State.PLAYING:
@@ -396,8 +392,8 @@ func _set_volume(v: float, save := true) -> void:
 func _build_audio_ui() -> void:
 	var box := Panel.new()
 	_audio_box = box
-	box.position = Vector2(480, 728)
-	box.size = Vector2(230, 64)
+	box.position = Vector2(520, 728)
+	box.size = Vector2(264, 64)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color("fffaff")
 	sb.border_color = Color("c9bfe8")
@@ -417,7 +413,7 @@ func _build_audio_ui() -> void:
 	box.add_child(_mute_btn)
 
 	_vol_label = Label.new()
-	_vol_label.position = Vector2(136, 8)
+	_vol_label.position = Vector2(166, 8)
 	_vol_label.size = Vector2(88, 22)
 	_vol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_vol_label.add_theme_font_size_override("font_size", 13)
@@ -430,7 +426,7 @@ func _build_audio_ui() -> void:
 	_vol_slider.step = 0.01
 	_vol_slider.focus_mode = Control.FOCUS_NONE
 	_vol_slider.position = Vector2(10, 40)
-	_vol_slider.size = Vector2(210, 16)
+	_vol_slider.size = Vector2(244, 16)
 	var track := StyleBoxFlat.new()
 	track.bg_color = Color("e3d9f5")
 	track.set_corner_radius_all(4)
@@ -535,7 +531,7 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _update_hud() -> void:
-	_label.text = "점수 %d   최고 %d" % [score, best]
+	_panel.set_score(score)
 
 ## --shot: 자동 드롭 시뮬레이션 후 스크린샷/통계 출력
 func _run_auto() -> void:
@@ -699,11 +695,15 @@ func _save_shot(path: String) -> void:
 func _run_title_test() -> void:
 	await get_tree().create_timer(0.4).timeout
 	var ok := true
-	var title_ok := state == State.TITLE and _title != null and not _panel.visible and not _label.visible
+	var title_ok := state == State.TITLE and _title != null and not _panel.visible
 	title_ok = title_ok and _title.start_button.text == "게임 시작" and TitleScreen.TITLE_KO == "치이카와 수박게임"
 	print("title shown: state=TITLE ui_hidden=%s %s" % [not _panel.visible, "OK" if title_ok else "FAIL"])
 	ok = ok and title_ok
 	_unhandled_input_blocked_check()
+	var art_right := ART_POS.x + BG_ART.get_width() * ART_SCALE
+	var lay_ok := _panel.position.x >= art_right + 4.0 and _skill_bar.position.x >= _panel.position.x and _panel.position.x + _panel.size.x <= 800.0
+	print("sidebar x=%.0f art_right=%.0f no_overlap %s" % [_panel.position.x, art_right, "OK" if lay_ok else "FAIL"])
+	ok = ok and lay_ok
 	_title.start_button.pressed.emit()
 	await get_tree().create_timer(0.3).timeout
 	var play_ok := state == State.PLAYING and _title == null and _panel.visible and _credit.visible and _credit.text.contains("비영리 팬 메이드") and _credit.text.contains("Nagano / Chiikawa Committee")
