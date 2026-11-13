@@ -7,7 +7,7 @@ signal fizzled
 
 const SPEED := 1100.0
 const BLADE := 70.0     # 칼날 길이(아래 방향이 끝)
-const FLOOR_Y := 700.0
+const FLOOR_Y := 702.0
 
 var _done := false
 

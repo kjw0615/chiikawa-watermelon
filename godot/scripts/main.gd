@@ -2,9 +2,9 @@ extends Node2D
 ## 프로토타입: 원근 박스 + 클릭 드롭 + 같은 단계 합체/점수/게임오버/SFX.
 ## 합체 사다리: 11단계 노드(data/nodes.json), 마지막 단계끼리는 소멸 +100점. 드롭은 1~5단계만. 클릭 드롭, R 재시작.
 
-const L := 40.0
-const R := 440.0
-const FLOOR_Y := 700.0
+const L := 24.0
+const R := 460.0
+const FLOOR_Y := 702.0   # 동굴 바닥 돌판 윗면(아트 기준)
 const TOP_Y := 120.0
 const DROP_Y := 60.0
 const DROP_COOLDOWN := 0.45
@@ -13,15 +13,34 @@ const MAX_COMBO := 5
 const SEP_INTERVAL := 0.15     # 끼임 감지 주기(초)
 const SEP_MIN_DEPTH := 3.0     # 이보다 깊게 겹쳐 있으면 분리(px)
 const SEP_STRENGTH := 0.6      # 한 번에 겹침 깊이의 이 비율만큼 분리
-const DROP_L := 54.0            # 드롭 x 범위(동굴 벽 굴곡 안쪽)
-const DROP_R := 426.0
+# 동굴 아트(cave_v1) 배치: 배경/전경 PNG(1024x1536)를 같은 스케일/위치로 겹침. 벽 콜라이더는 전경 알파에서 추출한 윤곽.
+const ART_SCALE := 0.52
+const ART_POS := Vector2(-18, 0)
+const BG_ART := preload("res://assets/maps/cave_v1/background.png")
+const FG_ART := preload("res://assets/maps/cave_v1/foreground.png")
 const WALL_THICK := 80.0
 const SAVE_PATH := "user://best.cfg"
 
-# 세이렌 동굴: 왼쪽 벽 윤곽(위->아래). 오른쪽은 x 기준 좌우 대칭. 모서리 데드존을 없애도록 하단을 둥글게 깎음.
+# 세이렌 동굴 벽 윤곽(전경 알파에서 추출, 위->아래). 왼쪽/오른쪽은 비대칭.
 const CAVE_LEFT := [
-	Vector2(36, -300), Vector2(36, 100), Vector2(30, 200), Vector2(40, 320), Vector2(34, 440),
-	Vector2(44, 560), Vector2(58, 640), Vector2(100, 690), Vector2(135, 700),
+	Vector2(69.1, -300.0), Vector2(69.1, 0.0), Vector2(61.1, 25.0), Vector2(58.2, 49.9),
+	Vector2(63.4, 74.9), Vector2(71.5, 99.8), Vector2(68.9, 124.8), Vector2(62.4, 149.8),
+	Vector2(55.8, 174.7), Vector2(48.8, 199.7), Vector2(41.6, 224.6), Vector2(35.8, 249.6),
+	Vector2(33.2, 274.6), Vector2(33.2, 299.5), Vector2(32.2, 324.5), Vector2(28.7, 349.4),
+	Vector2(25.4, 374.4), Vector2(25.4, 399.4), Vector2(29.1, 424.3), Vector2(31.7, 449.3),
+	Vector2(30.5, 474.2), Vector2(26.5, 499.2), Vector2(26.1, 524.2), Vector2(28.6, 549.1),
+	Vector2(30.3, 574.1), Vector2(28.7, 599.0), Vector2(29.6, 624.0), Vector2(33.2, 649.0),
+	Vector2(36.6, 655.2), Vector2(46.2, 681.2), Vector2(60.8, 702.0)
+]
+const CAVE_RIGHT := [
+	Vector2(420.6, -300.0), Vector2(420.6, 0.0), Vector2(416.8, 25.0), Vector2(409.9, 49.9),
+	Vector2(407.9, 74.9), Vector2(412.8, 99.8), Vector2(421.6, 124.8), Vector2(429.1, 149.8),
+	Vector2(432.6, 174.7), Vector2(435.5, 199.7), Vector2(439.5, 224.6), Vector2(444.2, 249.6),
+	Vector2(446.4, 274.6), Vector2(448.3, 299.5), Vector2(451.1, 324.5), Vector2(453.7, 349.4),
+	Vector2(454.6, 374.4), Vector2(453.5, 399.4), Vector2(453.5, 424.3), Vector2(454.6, 449.3),
+	Vector2(454.1, 474.2), Vector2(453.9, 499.2), Vector2(453.4, 524.2), Vector2(456.3, 549.1),
+	Vector2(458.4, 574.1), Vector2(457.9, 599.0), Vector2(454.7, 624.0), Vector2(451.5, 649.0),
+	Vector2(450.8, 655.2), Vector2(447.1, 681.2), Vector2(435.7, 702.0)
 ]
 
 const SFX := {
@@ -58,6 +77,10 @@ var _volume := 1.0
 var items: ItemSystem
 var _skill_bar: SkillBar
 var last_play_x := 240.0   # 마우스가 마지막으로 있던 플레이 영역 x(명검 낙하 위치)
+var drop_l := 60.0    # 드롭선(y=DROP_Y) 높이에서의 벽 안쪽 x 범위(윤곽에서 계산)
+var drop_r := 410.0
+var _art_bg: Sprite2D
+var _art_fg: Sprite2D
 var _cave: PackedVector2Array   # 동굴 윤곽 폴리라인(왼쪽 위 -> 바닥 -> 오른쪽 위)
 
 func _ready() -> void:
@@ -66,25 +89,32 @@ func _ready() -> void:
 	_auto = _auto or verify   # 자체 테스트 모드
 	_build_cave()
 	_build_walls()
+	_art_bg = _make_art(BG_ART, -100)
+	_art_fg = _make_art(FG_ART, -50)   # 노드가 돌판/바위에 가려지지 않도록 노드(z=0) 뒤, 배경(-100) 앞
 	for i in 8:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_players.append(p)
 	_label = Label.new()
 	_label.position = Vector2(10, 8)
-	_label.add_theme_color_override("font_color", Color("f3eefc"))
+	_label.add_theme_color_override("font_color", Color("ffffff"))
+	_label.add_theme_color_override("font_outline_color", Color("2d2552"))
+	_label.add_theme_constant_override("outline_size", 5)
 	add_child(_label)
 	_over_label = Label.new()
-	_over_label.position = Vector2(L, 300)
-	_over_label.size = Vector2(400, 100)
+	_over_label.position = Vector2(drop_l, 300)
+	_over_label.size = Vector2(drop_r - drop_l, 100)
 	_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_over_label.add_theme_font_size_override("font_size", 30)
-	_over_label.add_theme_color_override("font_color", Color("f3eefc"))
+	_over_label.add_theme_color_override("font_color", Color("ffffff"))
+	_over_label.add_theme_color_override("font_outline_color", Color("2d2552"))
+	_over_label.add_theme_constant_override("outline_size", 8)
 	_over_label.z_index = 50
 	add_child(_over_label)
 	_panel = SidePanel.new()
 	_panel.position = Vector2(480, 20)
 	_panel.size = Vector2(230, 700)
+	_panel.z_index = 40
 	add_child(_panel)
 	_preview = Sprite2D.new()
 	_preview.z_index = 20
@@ -96,6 +126,7 @@ func _ready() -> void:
 	_skill_bar = SkillBar.new()
 	_skill_bar.position = Vector2(480, 566)
 	_skill_bar.size = Vector2(230, 150)
+	_skill_bar.z_index = 41
 	add_child(_skill_bar)
 	_skill_bar.setup(items)
 	_skill_bar.use_requested.connect(func(id: String): items.use(id))
@@ -155,13 +186,40 @@ func _show_held() -> void:
 	_panel.set_next(next_stage)
 
 ## 동굴 윤곽(왼쪽 위 -> 왼쪽 바닥 -> 오른쪽 바닥 -> 오른쪽 위)
+func _make_art(tex: Texture2D, z: int) -> Sprite2D:
+	var sp := Sprite2D.new()
+	sp.texture = tex
+	sp.centered = false
+	sp.position = ART_POS
+	sp.scale = Vector2.ONE * ART_SCALE
+	sp.z_index = z
+	add_child(sp)
+	return sp
+
 func _build_cave() -> void:
 	var pts := PackedVector2Array()
 	for p in CAVE_LEFT:
 		pts.append(p)
-	for i in range(CAVE_LEFT.size() - 1, -1, -1):
-		pts.append(Vector2(L + R - CAVE_LEFT[i].x, CAVE_LEFT[i].y))
+	for i in range(CAVE_RIGHT.size() - 1, -1, -1):
+		pts.append(CAVE_RIGHT[i])
 	_cave = pts
+	# 드롭 높이(노드가 떨어지는 구간)에서 가장 좁은 안쪽 폭 기준으로 드롭 x 범위 결정
+	drop_l = 0.0
+	drop_r = 1.0e6
+	for y in range(int(DROP_Y) - 30, int(DROP_Y) + 90, 10):
+		drop_l = maxf(drop_l, _wall_x(CAVE_LEFT, float(y)))
+		drop_r = minf(drop_r, _wall_x(CAVE_RIGHT, float(y)))
+	drop_l += 4.0
+	drop_r -= 4.0
+
+## 윤곽 폴리라인(위->아래)에서 높이 y 의 벽 x 를 선형 보간
+func _wall_x(line: Array, y: float) -> float:
+	for i in line.size() - 1:
+		var a: Vector2 = line[i]
+		var b: Vector2 = line[i + 1]
+		if y >= a.y and y <= b.y and b.y > a.y:
+			return lerpf(a.x, b.x, (y - a.y) / (b.y - a.y))
+	return line[line.size() - 1].x
 
 ## 각 윤곽 선분을 바깥쪽으로 WALL_THICK 만큼 압출한 볼록 사각형 콜라이더(CCD 없이도 터널링 방지)
 func _build_walls() -> void:
@@ -170,7 +228,7 @@ func _build_walls() -> void:
 	pm.friction = 0.3
 	pm.bounce = 0.03
 	wall.physics_material_override = pm
-	var center := Vector2((L + R) / 2.0, 300.0)
+	var center := Vector2((L + R) / 2.0, 400.0)
 	for i in _cave.size() - 1:
 		var p0 := _cave[i]
 		var p1 := _cave[i + 1]
@@ -183,58 +241,16 @@ func _build_walls() -> void:
 	add_child(wall)
 
 func _draw() -> void:
-	# 하늘색 테두리 없는 깨끗한 세이렌 동굴: 어두운 보랏빛 내부 + 바위 벽
-	var top_y := 0.0
-	var interior := PackedVector2Array()
-	var cols := PackedColorArray()
-	for p in _cave:
-		if p.y < top_y:
-			continue
-		interior.append(p)
-	interior.insert(0, Vector2(_cave[0].x, top_y))
-	interior.append(Vector2(L + R - _cave[0].x, top_y))
-	for p in interior:
-		var k := clampf(p.y / FLOOR_Y, 0.0, 1.0)
-		cols.append(Color("3a2f66").lerp(Color("211a42"), k))
-	draw_polygon(interior, cols)
-	var rock := Color("120e26")
-	var left_rock := PackedVector2Array([Vector2(0, top_y), Vector2(_cave[0].x, top_y)])
-	var right_rock := PackedVector2Array([Vector2(L + R, top_y)])
-	for i in _cave.size():
-		var p := _cave[i]
-		if p.y < top_y:
-			continue
-		if i < CAVE_LEFT.size():
-			left_rock.append(p)
-		else:
-			right_rock.append(p)
-	left_rock.append(Vector2(0, FLOOR_Y + 100))
-	right_rock = _reverse_tail(right_rock)
-	right_rock.insert(1, Vector2(L + R - _cave[0].x, top_y))
-	right_rock.append(Vector2(L + R, FLOOR_Y + 100))
-	draw_colored_polygon(left_rock, rock)
-	draw_colored_polygon(right_rock, rock)
-	draw_rect(Rect2(0, FLOOR_Y, L + R, 120), rock)
-	# 바위 윤곽의 은은한 하이라이트(하늘색 아님)
-	draw_polyline(_cave, Color("5d4a9a"), 3.0)
-	draw_polyline(_cave, Color("8a74d1", 0.35), 1.0)
-
+	# 배경/전경 아트는 Sprite2D(_art_bg/_art_fg)로 그리고, 여기서는 게임오버 선과 합체 이펙트만 그린다.
 	var danger := 0.0
 	for h in get_tree().get_nodes_in_group("heads"):
 		danger = maxf(danger, h.danger)
-	var a := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 80.0) * clampf(danger / OVER_TIME, 0.0, 1.0)
-	var line_col := Color(1, 0.4, 0.5, a).lerp(Color(1, 0.1, 0.1, 1), clampf(danger / OVER_TIME, 0.0, 1.0))
-	draw_line(Vector2(L, TOP_Y), Vector2(R, TOP_Y), line_col, 2.0 + 2.0 * danger)
+	var a := 0.7 + 0.3 * sin(Time.get_ticks_msec() / 80.0) * clampf(danger / OVER_TIME, 0.0, 1.0)
+	var line_col := Color(1, 0.45, 0.6, a).lerp(Color(1, 0.1, 0.1, 1), clampf(danger / OVER_TIME, 0.0, 1.0))
+	draw_line(Vector2(_wall_x(CAVE_LEFT, TOP_Y), TOP_Y), Vector2(_wall_x(CAVE_RIGHT, TOP_Y), TOP_Y), line_col, 2.0 + 2.0 * danger)
 	for p in pops:
 		var k: float = p["t"] / 0.3
 		draw_arc(p["pos"], p["r"] * (1.0 + k * 0.6), 0, TAU, 32, Color(1, 0.55, 0.7, 1.0 - k), 4.0)
-
-## right_rock 은 [첫점, 오른쪽 윤곽(바닥->위)...] 순서로 쌓였으므로 윤곽 부분만 위->아래 순으로 뒤집어 다각형 방향을 맞춤
-func _reverse_tail(arr: PackedVector2Array) -> PackedVector2Array:
-	var out := PackedVector2Array([arr[0]])
-	for i in range(arr.size() - 1, 0, -1):
-		out.append(arr[i])
-	return out
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
@@ -251,7 +267,7 @@ func _unhandled_input(e: InputEvent) -> void:
 
 func drop(x: float) -> void:
 	var r := NodeDefs.radius(held_stage)
-	spawn(held_stage, Vector2(clampf(x, DROP_L + r, DROP_R - r), DROP_Y))
+	spawn(held_stage, Vector2(clampf(x, drop_l + r, drop_r - r), DROP_Y))
 	cooldown = DROP_COOLDOWN
 	held_stage = next_stage
 	next_stage = _rnd_stage()
@@ -335,6 +351,7 @@ func _build_audio_ui() -> void:
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(12)
 	box.add_theme_stylebox_override("panel", sb)
+	box.z_index = 41
 	add_child(box)
 
 	_mute_btn = Button.new()
@@ -453,9 +470,9 @@ func _physics_process(dt: float) -> void:
 
 func _process(dt: float) -> void:
 	var mx := get_global_mouse_position().x
-	if mx > DROP_L and mx < DROP_R:
+	if mx > drop_l and mx < drop_r:
 		last_play_x = mx
-	_preview.position = Vector2(clampf(mx, DROP_L + 20, DROP_R - 20), DROP_Y)
+	_preview.position = Vector2(clampf(mx, drop_l + 20, drop_r - 20), DROP_Y)
 	_preview.visible = not over and cooldown <= 0.0
 	for p in pops:
 		p["t"] += dt
@@ -470,7 +487,7 @@ func _run_auto() -> void:
 	for i in 60:
 		if over:
 			break
-		drop(randf_range(DROP_L, DROP_R))
+		drop(randf_range(drop_l, drop_r))
 		if "--items" in OS.get_cmdline_user_args() and i % 7 == 6:
 			items.gauge = 100.0   # 아이템 스트레스: 더미가 쌓인 상태에서 아이템을 연속 사용
 			items.use(["shake", "fountain", "swap", "sword"][(i / 7) % 4])
@@ -482,7 +499,7 @@ func _run_auto() -> void:
 	print("settle@4s ", early, " merges=", merges)
 	_update_hud()
 	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
-	get_viewport().get_texture().get_image().save_png(path)
+	_save_shot(path)
 	print("saved ", path, " score=", score, " merges=", merges, " seps=", separations, " over=", over, " states=", Head.state_counts, " heads=", get_tree().get_nodes_in_group("heads").size(), " outside=", _count_outside(), " ", _settle_stats())
 	get_tree().quit()
 
@@ -527,7 +544,7 @@ func _run_verify() -> void:
 			outside += 1
 			print("  outside: stage ", h.stage + 1, " pos=", h.position)
 	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
-	get_viewport().get_texture().get_image().save_png(path)
+	_save_shot(path)
 	print("drop-all: heads=", get_tree().get_nodes_in_group("heads").size(), " merges=", merges, " outside_box=", outside, " over=", over, " ", _settle_stats())
 	print("VERIFY ", "PASS" if ok and outside == 0 else "FAIL")
 	get_tree().quit()
@@ -567,7 +584,7 @@ func _item_test() -> bool:
 	_new_game()
 	for i in 16:
 		cooldown = 0.0
-		drop(randf_range(DROP_L + 40.0, DROP_R - 40.0))
+		drop(randf_range(drop_l + 40.0, drop_r - 40.0))
 		await get_tree().create_timer(0.3).timeout
 	await get_tree().create_timer(3.0).timeout
 	var all_ok := true
@@ -616,3 +633,9 @@ func _item_test() -> bool:
 	print("item low-gauge deny=%s %s" % [denied, "OK" if denied else "FAIL"])
 	all_ok = all_ok and denied
 	return all_ok
+
+## 스크린샷 저장(--headless 에서는 렌더링이 없어 건너뜀). 자체 테스트는 창을 띄우지 않도록 항상 --headless 로 실행한다.
+func _save_shot(path: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	get_viewport().get_texture().get_image().save_png(path)

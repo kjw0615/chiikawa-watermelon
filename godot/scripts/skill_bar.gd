@@ -58,11 +58,11 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	var icon_path: String = it.get("icon", "")
 	if icon_path != "" and ResourceLoader.exists(icon_path):
 		var tr := TextureRect.new()
-		tr.texture = load(icon_path)
-		tr.size = slot.size - Vector2(4, 4)
-		tr.position = Vector2(2, 2)
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE   # 크기 지정보다 먼저(원본 128px 최소 크기 방지)
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture = load(icon_path)
+		tr.position = Vector2(2, 2)
+		tr.size = slot.size - Vector2(4, 4)
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(tr)
 	else:
