@@ -1,0 +1,106 @@
+{
+  "files": [
+    {
+      "file": "godot/assets/maps/cave_v1/background.png",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        253
+      ],
+      "transparent_pixels": 13607,
+      "sha256": "e348802f947df954d2a46375421f8c8741f54ecaa676d048695e17af72692f5e"
+    },
+    {
+      "file": "godot/assets/maps/cave_v1/foreground.png",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "transparent_pixels": 1025901,
+      "sha256": "39c6d064f41f7c02aeca7ca01aaabe7f9966e6c806f6b6325991713563dbacb1"
+    },
+    {
+      "file": "godot/assets/icons/items_v1/item01_usagi_shake.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_pixels": 10703,
+      "sha256": "d6e4a788d208b35ef7eb9150cd8a66d101771b16ad83a14e44641e1e6effed1a"
+    },
+    {
+      "file": "godot/assets/icons/items_v1/item02_bazaar_ticket.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_pixels": 9143,
+      "sha256": "8821c300bd39b38ecbd5c95ed465949a1513c160454291723f7b636c128216e2"
+    },
+    {
+      "file": "godot/assets/icons/items_v1/item03_rakko_sword.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_pixels": 12751,
+      "sha256": "f5c1fe673c6655cde1d86c6c58c53027826fec89afd7cc5ed91162ff59b4c27c"
+    },
+    {
+      "file": "godot/assets/icons/items_v1/item05_food_fountain.png",
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_pixels": 12173,
+      "sha256": "bb0aaaf7b0bf4c7eb54f791b9a288b903f539eeca62ead2fca3f8db45844aa9c"
+    }
+  ],
+  "foreground_center_alpha_samples": [
+    [
+      512,
+      300,
+      0
+    ],
+    [
+      512,
+      768,
+      0
+    ],
+    [
+      512,
+      1200,
+      0
+    ]
+  ],
+  "scene_connected": false
+}
