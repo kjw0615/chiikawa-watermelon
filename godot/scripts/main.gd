@@ -10,6 +10,9 @@ const DROP_Y := 60.0
 const DROP_COOLDOWN := 0.45
 const OVER_TIME := 2.0
 const MAX_COMBO := 5
+const SEP_INTERVAL := 0.15     # 끼임 감지 주기(초)
+const SEP_MIN_DEPTH := 3.0     # 이보다 깊게 겹쳐 있으면 분리(px)
+const SEP_STRENGTH := 0.6      # 한 번에 겹침 깊이의 이 비율만큼 분리
 const SAVE_PATH := "user://best.cfg"
 
 const SFX := {
@@ -35,10 +38,15 @@ var _preview: Sprite2D
 var _players: Array[AudioStreamPlayer] = []
 var _sfx_i := 0
 var _auto := false
+var _sep_t := 0.0
+var separations := 0
+var _muted := false
+var _mute_btn: Button
 
 func _ready() -> void:
 	_auto = "--shot" in OS.get_cmdline_user_args()
 	var verify := "--verify" in OS.get_cmdline_user_args()
+	_auto = _auto or verify   # 자체 테스트 모드
 	_build_walls()
 	for i in 8:
 		var p := AudioStreamPlayer.new()
@@ -61,9 +69,18 @@ func _ready() -> void:
 	_preview = Sprite2D.new()
 	_preview.z_index = 20
 	add_child(_preview)
+	_mute_btn = Button.new()
+	_mute_btn.position = Vector2(480, 732)
+	_mute_btn.size = Vector2(230, 40)
+	_mute_btn.focus_mode = Control.FOCUS_NONE   # 스페이스/엔터로 눌리지 않게
+	_mute_btn.pressed.connect(func(): _set_muted(not _muted))
+	add_child(_mute_btn)
 	var cf := ConfigFile.new()
 	if cf.load(SAVE_PATH) == OK:
 		best = cf.get_value("game", "best", 0)
+		_muted = cf.get_value("audio", "muted", false)
+	# 자체 테스트(--shot/--verify)는 항상 무음 + 설정 파일 미저장
+	_set_muted(true if _auto else _muted, false)
 	_new_game()
 	if verify:
 		_run_verify()
@@ -94,10 +111,10 @@ func _roll_next() -> void:
 func _build_walls() -> void:
 	var wall := StaticBody2D.new()
 	var pm := PhysicsMaterial.new()
-	pm.friction = 0.8
-	pm.bounce = 0.1
+	pm.friction = 0.3
+	pm.bounce = 0.03
 	wall.physics_material_override = pm
-	for r in [Rect2(L - 20, -400, 20, 1400), Rect2(R, -400, 20, 1400), Rect2(L - 40, FLOOR_Y, R - L + 80, 20)]:
+	for r in [Rect2(L - 80, -400, 80, 1600), Rect2(R, -400, 80, 1600), Rect2(L - 80, FLOOR_Y, R - L + 160, 80)]:
 		var cs := CollisionShape2D.new()
 		var rs := RectangleShape2D.new()
 		rs.size = r.size
@@ -129,7 +146,9 @@ func _draw() -> void:
 		draw_arc(p["pos"], p["r"] * (1.0 + k * 0.6), 0, TAU, 32, Color(1, 0.55, 0.7, 1.0 - k), 4.0)
 
 func _unhandled_input(e: InputEvent) -> void:
-	if e is InputEventKey and e.pressed and e.keycode == KEY_R:
+	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
+		_set_muted(not _muted)
+	elif e is InputEventKey and e.pressed and e.keycode == KEY_R:
 		_new_game()
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 		if over:
@@ -188,10 +207,58 @@ func _merge(a: Head, b: Head) -> void:
 	_play("chain" if combo >= 2 else "pop", 1.0)
 	if score > best:
 		best = score
-		var cf := ConfigFile.new()
-		cf.set_value("game", "best", best)
-		cf.save(SAVE_PATH)
+		_save_cfg()
 	_update_hud()
+
+func _set_muted(m: bool, save := true) -> void:
+	_muted = m
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), m)
+	_mute_btn.text = "소리 꺼짐 (M)" if m else "소리 켜짐 (M)"
+	if save and not _auto:
+		_save_cfg()
+
+func _save_cfg() -> void:
+	if _auto:
+		return   # 테스트 실행이 사용자 최고점/설정을 덮어쓰지 않게
+	var cf := ConfigFile.new()
+	cf.load(SAVE_PATH)
+	cf.set_value("game", "best", best)
+	cf.set_value("audio", "muted", _muted)
+	cf.save(SAVE_PATH)
+
+## 끼임 안전장치: 서로 콜라이더가 깊게 겹친 쌍을 찾아 겹친 깊이만큼 중심 반대 방향으로 위치를 보정하고 살짝 밀어 분리
+func _separate_overlaps() -> void:
+	var hs := get_tree().get_nodes_in_group("heads")
+	for i in hs.size():
+		var a: Head = hs[i]
+		if a.merging:
+			continue
+		for j in range(i + 1, hs.size()):
+			var b: Head = hs[j]
+			if b.merging or a.stage == b.stage:   # 같은 단계는 합체로 처리
+				continue
+			var d := b.position - a.position
+			if d.length() > (NodeDefs.radius(a.stage) + NodeDefs.radius(b.stage)) * 1.4:
+				continue
+			var inter := Geometry2D.intersect_polygons(a.world_collider(), b.world_collider())
+			if inter.is_empty():
+				continue
+			var n := d.normalized() if d.length() > 0.01 else Vector2.UP
+			var lo := INF
+			var hi := -INF
+			for p in inter[0]:
+				var k := p.dot(n)
+				lo = minf(lo, k)
+				hi = maxf(hi, k)
+			var depth := hi - lo
+			if depth < SEP_MIN_DEPTH:
+				continue
+			var wa := b.mass / (a.mass + b.mass)
+			a.shift(-n * depth * SEP_STRENGTH * wa)
+			b.shift(n * depth * SEP_STRENGTH * (1.0 - wa))
+			a.apply_central_impulse(-n * 40.0 * a.mass)   # 살짝 흔들어 분리
+			b.apply_central_impulse(n * 40.0 * b.mass)
+			separations += 1
 
 func _play(name: String, vol: float) -> void:
 	var p := _players[_sfx_i]
@@ -201,6 +268,10 @@ func _play(name: String, vol: float) -> void:
 	p.play()
 
 func _physics_process(dt: float) -> void:
+	_sep_t += dt
+	if _sep_t >= SEP_INTERVAL:
+		_sep_t = 0.0
+		_separate_overlaps()
 	cooldown = maxf(cooldown - dt, 0.0)
 	combo_t = maxf(combo_t - dt, 0.0)
 	if over:
@@ -237,12 +308,29 @@ func _run_auto() -> void:
 		drop(randf_range(L, R))
 		_update_hud()
 		await get_tree().create_timer(0.35).timeout
-	await get_tree().create_timer(2.5).timeout
+	await get_tree().create_timer(4.0).timeout
+	var early := _settle_stats()
+	await get_tree().create_timer(4.0).timeout
+	print("settle@4s ", early, " merges=", merges)
 	_update_hud()
 	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
 	get_viewport().get_texture().get_image().save_png(path)
-	print("saved ", path, " score=", score, " merges=", merges, " over=", over, " states=", Head.state_counts, " heads=", get_tree().get_nodes_in_group("heads").size())
+	print("saved ", path, " score=", score, " merges=", merges, " seps=", separations, " over=", over, " states=", Head.state_counts, " heads=", get_tree().get_nodes_in_group("heads").size(), " ", _settle_stats())
 	get_tree().quit()
+
+## 정착 후 속도 통계(미끄러짐/끼임 지터 지표): 정지해야 할 시점에 움직이는 노드 수
+func _settle_stats() -> String:
+	var moving := 0
+	var vmax := 0.0
+	var vsum := 0.0
+	var hs := get_tree().get_nodes_in_group("heads")
+	for h: Head in hs:
+		var v := h.linear_velocity.length() + absf(h.angular_velocity) * 10.0
+		vmax = maxf(vmax, v)
+		vsum += v
+		if v > 15.0:
+			moving += 1
+	return "settle(moving=%d/%d vmax=%.1f vavg=%.2f)" % [moving, hs.size(), vmax, vsum / maxi(hs.size(), 1)]
 
 ## --verify: 11단계 전부의 알파 외곽선 콜라이더 점검 + 전 단계 동시 낙하 시뮬레이션
 func _run_verify() -> void:
@@ -255,6 +343,9 @@ func _run_verify() -> void:
 		var good: bool = outline.size() >= 8 and pieces.size() >= 1 and absf(eq - NodeDefs.radius(st)) < 1.0
 		ok = ok and good
 		print("stage %2d %-10s pts=%3d convex=%2d eq_r=%.1f (target %.0f) %s" % [st + 1, NodeDefs.node_name(st), outline.size(), pieces.size(), eq, NodeDefs.radius(st), "OK" if good else "FAIL"])
+	# 단독 회전 테스트: 각 단계를 약간 기울여 바닥에 떨어뜨리고 정착 후 회전/이동이 멈추는지 확인
+	var spin_ok := await _spin_test()
+	ok = ok and spin_ok
 	for st in NodeDefs.count():
 		var r := NodeDefs.radius(st)
 		spawn(st, Vector2(randf_range(L + r, R - r), DROP_Y - st * 5.0)).age = 0.0
@@ -267,6 +358,22 @@ func _run_verify() -> void:
 			print("  outside: stage ", h.stage + 1, " pos=", h.position)
 	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
 	get_viewport().get_texture().get_image().save_png(path)
-	print("drop-all: heads=", get_tree().get_nodes_in_group("heads").size(), " merges=", merges, " outside_box=", outside, " over=", over)
+	print("drop-all: heads=", get_tree().get_nodes_in_group("heads").size(), " merges=", merges, " outside_box=", outside, " over=", over, " ", _settle_stats())
 	print("VERIFY ", "PASS" if ok and outside == 0 else "FAIL")
 	get_tree().quit()
+
+func _spin_test() -> bool:
+	var all_ok := true
+	for st in NodeDefs.count():
+		var h := spawn(st, Vector2((L + R) / 2.0, 400.0))
+		h.rotation = 0.6
+		h.angular_velocity = 0.0
+		await get_tree().create_timer(4.0).timeout
+		var w := absf(h.angular_velocity)
+		var v := h.linear_velocity.length()
+		var good := w < 0.3 and v < 8.0
+		all_ok = all_ok and good
+		print("spin  stage %2d %-8s w=%.3f v=%.2f rot=%.2f %s" % [st + 1, NodeDefs.node_name(st), w, v, h.rotation, "OK" if good else "FAIL"])
+		h.queue_free()
+		await get_tree().process_frame
+	return all_ok
