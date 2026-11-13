@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "created": "2026-11-14",
+  "mode": "built-in image_gen",
+  "file": "review.png",
+  "status": "pending_user_review",
+  "game_applied": false,
+  "issue": "https://github.com/kjw0615/chiikawa-watermelon/issues/4",
+  "transparent_background": false,
+  "design_reference": {
+    "playable_width": 400,
+    "danger_line_to_floor_height": 580,
+    "max_node_nominal_diameter": 236,
+    "units": "existing game reference, not measured illustration coordinates"
+  },
+  "prompt": "Use case: stylized-concept.\nCreate a BRAND NEW SINGLE-VIEW TALL PORTRAIT review illustration, aspect ratio 2:3 (for example 1024 wide by 1536 high). This is a tall vertical coastal cave crevice map for a cute Chiikawa head-merging puzzle game, inspired by Siren Island. ONE LARGE FRONT-VIEW CAVE ONLY, NO side panel, NO inset diagram, NO landscape layout, NO two-column board.\nGeometry is paramount: the EMPTY playable cave cavity must have clear width:height = 400:580, approximately 0.69. A vertical chamber about 1.45 times as tall as wide. On a portrait 1024x1536 canvas, place cyan left side near x150, right side near x874 (clear width 724), upper endpoints around y200 and broad flat bottom near y1250 (height 1050). Entire main illustration shows these proportions visibly. Add a thin bright turquoise collision boundary following the two very gently curved near-vertical inside rock faces, connecting with small rounded bottom corners into a LONG WIDE HORIZONTAL FLAT ROCK FLOOR. The bottom clear width remains at least 85% of top clear width. No interior ledges, no sharp rock spurs, no narrow neck, no V funnel, no enclosed pockets. Top is OPEN, NO roof, arch, stalactites or horizontal cyan top line.\nSurround the cavity with thick slate blue, dusty indigo and lavender wet stone cliffs, soft hand-painted 2.5D rounded layered rock texture; pale blue atmospheric light from above and a quiet mysterious dusk feeling. Interior empty background is slightly lighter and low-detail for character visibility. Cyan collision line matches the exact inward edges of the rock, all protruding detail remains outside it. A shallow clear turquoise tidal pool and small ripples appear BELOW the flat rock floor near bottom of image, not inside playable cavity. Sparse very subtle glowing flecks along external rock surfaces only.\nAt top a small neat heading \"SIREN ISLAND - CAVE MAP v1\", subtitle \"DRAFT - USER REVIEW\". At very bottom small legend \"CYAN = INNER COLLISION EDGE\". Minimal lettering, no other labels, no dimension panel. No character heads or other characters, no foreground obstacles, no game UI, no skulls, no photo realism, no watermark. Full map and cyan floor visible with margins. Keep dark texture outside the play space. Elegant atmospheric game art review PNG, not a verified collider or production texture.",
+  "selection_note": "Selected fresh single-view portrait. Earlier two-panel candidates were discarded after proportional review."
+}
