@@ -1,10 +1,7 @@
 class_name HeadShapes
 ## 머리 스프라이트(PNG)의 알파 외곽선을 추출해 콜라이더/압출 레이어용 실루엣을 만든다.
-## 순서 = 합체 단계: 0 치이카와(둥근형) -> 1 하치와레(뾰족귀) -> 2 우사기(긴귀)
+## 단계별 이미지/반지름은 NodeDefs(data/nodes.json)에서 가져온다. 반지름 = 등가 반지름 sqrt(면적/PI).
 
-const KINDS := ["chiikawa", "hachiware", "usagi"]
-const NAMES := ["치이카와", "하치와레", "우사기"]
-const RAD := [34.0, 44.0, 56.0]   # 단계별 등가 반지름(px) = sqrt(면적/PI)
 const STATES := ["neutral", "surprised", "squash", "happy"]
 const EPSILON := 3.0              # 외곽선 단순화 정도(텍스처 px)
 
@@ -31,7 +28,7 @@ static func get_data(stage: int) -> Dictionary:
 		return _cache[stage]
 	var texs := {}
 	for st in STATES:
-		texs[st] = load("res://assets/heads/%s_%s.png" % [KINDS[stage], st])
+		texs[st] = load(NodeDefs.art_path(stage, st))
 	var tex: Texture2D = texs["neutral"]   # 콜라이더/정렬은 neutral 기준 고정
 	var img := tex.get_image()
 	var bm := BitMap.new()
@@ -46,7 +43,7 @@ static func get_data(stage: int) -> Dictionary:
 			best = p
 	var ac := area_centroid(best)
 	var cen: Vector2 = ac[1]
-	var s: float = RAD[stage] / sqrt(best_area / PI)
+	var s: float = NodeDefs.radius(stage) / sqrt(best_area / PI)
 
 	var outline := PackedVector2Array()
 	var lo := Vector2(INF, INF)

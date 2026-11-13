@@ -1,15 +1,14 @@
 extends Node2D
 ## 프로토타입: 원근 박스 + 클릭 드롭 + 같은 단계 합체/점수/게임오버/SFX.
-## 합체 사다리: 치이카와 -> 하치와레 -> 우사기 -> (소멸 +100점). 클릭 드롭, R 재시작.
+## 합체 사다리: 11단계 노드(data/nodes.json), 마지막 단계끼리는 소멸 +100점. 드롭은 1~5단계만. 클릭 드롭, R 재시작.
 
-const L := 70.0
-const R := 470.0
+const L := 40.0
+const R := 440.0
 const FLOOR_Y := 700.0
 const TOP_Y := 120.0
 const DROP_Y := 60.0
 const DROP_COOLDOWN := 0.45
 const OVER_TIME := 2.0
-const MAX_DROP_STAGE := 1
 const MAX_COMBO := 5
 const SAVE_PATH := "user://best.cfg"
 
@@ -31,6 +30,7 @@ var merges := 0
 var pops: Array = []
 var _label: Label
 var _over_label: Label
+var _panel: SidePanel
 var _preview: Sprite2D
 var _players: Array[AudioStreamPlayer] = []
 var _sfx_i := 0
@@ -47,12 +47,16 @@ func _ready() -> void:
 	_label.position = Vector2(10, 8)
 	add_child(_label)
 	_over_label = Label.new()
-	_over_label.position = Vector2(70, 300)
+	_over_label.position = Vector2(L, 300)
 	_over_label.size = Vector2(400, 100)
 	_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_over_label.add_theme_font_size_override("font_size", 30)
 	_over_label.z_index = 50
 	add_child(_over_label)
+	_panel = SidePanel.new()
+	_panel.position = Vector2(480, 20)
+	_panel.size = Vector2(230, 700)
+	add_child(_panel)
 	_preview = Sprite2D.new()
 	_preview.z_index = 20
 	add_child(_preview)
@@ -76,12 +80,13 @@ func _new_game() -> void:
 	_update_hud()
 
 func _roll_next() -> void:
-	next_stage = randi() % (MAX_DROP_STAGE + 1)
+	next_stage = randi() % (NodeDefs.drop_max_index() + 1)   # 드롭은 1~5단계만, 이후는 합체로만
 	_preview.texture = HeadShapes.get_data(next_stage)["tex"]
 	var d := HeadShapes.get_data(next_stage)
 	_preview.offset = d["size"] / 2.0 - d["centroid"]
 	_preview.scale = Vector2.ONE * d["scale"]
 	_preview.modulate = Color(1, 1, 1, 0.85)
+	_panel.set_next(next_stage)
 
 func _build_walls() -> void:
 	var wall := StaticBody2D.new()
@@ -130,7 +135,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			drop(e.position.x)
 
 func drop(x: float) -> void:
-	spawn(next_stage, Vector2(clampf(x, L + HeadShapes.RAD[next_stage], R - HeadShapes.RAD[next_stage]), DROP_Y))
+	spawn(next_stage, Vector2(clampf(x, L + NodeDefs.radius(next_stage), R - NodeDefs.radius(next_stage)), DROP_Y))
 	cooldown = DROP_COOLDOWN
 	_roll_next()
 
@@ -171,12 +176,12 @@ func _merge(a: Head, b: Head) -> void:
 	combo = combo + 1 if combo_t > 0.0 else 1
 	combo_t = 0.8
 	var gain := (st + 1) * 2
-	if st + 1 < HeadShapes.KINDS.size():
+	if st + 1 < NodeDefs.count():
 		spawn(st + 1, pos, vel).pop_in()
 	else:
 		gain += 100
 	score += gain * mini(combo, MAX_COMBO)
-	pops.append({"pos": pos, "r": HeadShapes.RAD[mini(st + 1, HeadShapes.KINDS.size() - 1)], "t": 0.0})
+	pops.append({"pos": pos, "r": NodeDefs.radius(mini(st + 1, NodeDefs.count() - 1)), "t": 0.0})
 	_play("chain" if combo >= 2 else "pop", 1.0)
 	if score > best:
 		best = score
@@ -219,11 +224,11 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _update_hud() -> void:
-	_label.text = "점수 %d   최고 %d   다음: %s" % [score, best, HeadShapes.NAMES[next_stage]]
+	_label.text = "점수 %d   최고 %d   다음: %s" % [score, best, NodeDefs.node_name(next_stage)]
 
 ## --shot: 자동 드롭 시뮬레이션 후 스크린샷/통계 출력
 func _run_auto() -> void:
-	for i in 40:
+	for i in 60:
 		if over:
 			break
 		drop(randf_range(L, R))
