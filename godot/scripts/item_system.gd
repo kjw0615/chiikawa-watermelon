@@ -23,6 +23,8 @@ var busy := false
 var suppress_over := false     # 분수 동안 게임오버 카운트다운 일시정지
 var last_sword_stage := -1
 var _fountain_t := 0.0
+var fountain_big_rise := 0.0      # 8단계 이상 노드가 분수로 솟은 최대 높이(검증용)
+var _big_rest := {}
 var fountain_peak_y := 9999.0   # 분수 중 노드가 도달한 가장 높은 y(검증용)
 var _particles: CPUParticles2D
 
@@ -156,6 +158,8 @@ func _fountain() -> void:
 	suppress_over = true
 	_fountain_t = FOUNTAIN_TIME
 	fountain_peak_y = 9999.0
+	fountain_big_rise = 0.0
+	_big_rest.clear()
 	if _particles == null:
 		_particles = _make_particles()
 		main.add_child(_particles)
@@ -198,12 +202,14 @@ func _physics_process(dt: float) -> void:
 		if h.merging:
 			continue
 		var dx: float = h.position.x - cx
-		var w := 1.0 - absf(dx) / FOUNTAIN_HALF_W
+		var rad := NodeDefs.radius(h.stage)
+		var w := 1.0 - absf(dx) / (FOUNTAIN_HALF_W + rad)   # 큰 노드는 몸통 폭만큼 영향 범위가 넓음
 		if w <= 0.0:
 			continue
+		w = maxf(w, 0.35)
 		h.sleeping = false
-		var lift := clampf((h.position.y - FOUNTAIN_CEIL_Y) / FOUNTAIN_FADE, 0.0, 1.0)   # 높이 제한: 천장 근처에서 힘이 0
-		var acc := Vector2(signf(dx) * FOUNTAIN_SIDE_ACC * w, -FOUNTAIN_UP_ACC * w * lift)
+		var lift := clampf((h.position.y - rad * 0.1 - FOUNTAIN_CEIL_Y) / FOUNTAIN_FADE, 0.0, 1.0)   # 높이 제한: 천장 근처에서 힘이 0
+		var acc := Vector2(signf(dx) * FOUNTAIN_SIDE_ACC * w, -FOUNTAIN_UP_ACC * w * lift * (1.0 + h.stage * 0.18))   # 단계가 클수록 위 노드 하중/마찰 보정
 		h.apply_central_force(acc * h.mass * ramp)
 		var v: Vector2 = h.linear_velocity
 		if h.position.y < FOUNTAIN_CEIL_Y and v.y < 0.0:
@@ -211,6 +217,11 @@ func _physics_process(dt: float) -> void:
 		v.y = maxf(v.y, -FOUNTAIN_MAX_UP)
 		h.linear_velocity = v
 		fountain_peak_y = minf(fountain_peak_y, h.position.y)
+		if h.stage >= 7:
+			var id: int = h.get_instance_id()
+			if not _big_rest.has(id):
+				_big_rest[id] = h.position.y
+			fountain_big_rise = maxf(fountain_big_rise, _big_rest[id] - h.position.y)
 	if _fountain_t <= 0.0:
 		_particles.emitting = false
 		suppress_over = false

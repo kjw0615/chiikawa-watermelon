@@ -60,7 +60,10 @@ var combo := 0
 var combo_t := 0.0
 var merges := 0
 var pops: Array = []
-var _over_label: Label
+var _over_modal: Panel
+var _over_score: Label
+var _over_restart: Button
+var _over_quit: Button
 var _panel: SidePanel
 var _preview: Sprite2D
 var _players: Array[AudioStreamPlayer] = []
@@ -70,6 +73,7 @@ var _sep_t := 0.0
 var separations := 0
 var _muted := false
 var _mute_btn: Button
+var _speaker: Control
 var _vol_slider: HSlider
 var _vol_label: Label
 var _volume := 1.0
@@ -100,16 +104,7 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_players.append(p)
-	_over_label = Label.new()
-	_over_label.position = Vector2(drop_l, 300)
-	_over_label.size = Vector2(drop_r - drop_l, 100)
-	_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_over_label.add_theme_font_size_override("font_size", 30)
-	_over_label.add_theme_color_override("font_color", Color("ffffff"))
-	_over_label.add_theme_color_override("font_outline_color", Color("2d2552"))
-	_over_label.add_theme_constant_override("outline_size", 8)
-	_over_label.z_index = 50
-	add_child(_over_label)
+	_build_over_modal()
 	_panel = SidePanel.new()
 	_panel.position = Vector2(520, 16)
 	_panel.size = Vector2(264, 700)
@@ -175,7 +170,7 @@ func _set_state(st: State) -> void:
 	for n in [_panel, _skill_bar, _audio_box, _credit]:
 		n.visible = playing
 	if not playing:
-		_over_label.text = ""
+		_over_modal.visible = false
 	_preview.visible = false
 
 func _start_game() -> void:
@@ -196,7 +191,7 @@ func _new_game() -> void:
 	combo = 0
 	merges = 0
 	items.reset()
-	_over_label.text = ""
+	_over_modal.visible = false
 	_roll_next()
 	_update_hud()
 
@@ -316,7 +311,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		if items.aiming:
 			items.confirm_aim(e.position.x)
 		elif over:
-			_new_game()
+			pass   # 게임오버 팝업의 버튼으로만 진행
 		elif cooldown <= 0.0:
 			drop(e.position.x)
 
@@ -386,7 +381,7 @@ func _set_muted(m: bool, save := true) -> void:
 	_muted = m
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), m)
 	_mute_btn.set_pressed_no_signal(m)
-	_mute_btn.text = "소리 꺼짐 (M)" if m else "소리 켜짐 (M)"
+	_speaker.queue_redraw()
 	_vol_slider.editable = not m
 	if save and not _auto:
 		_save_cfg()
@@ -395,11 +390,79 @@ func _set_volume(v: float, save := true) -> void:
 	_volume = clampf(v, 0.0, 1.0)
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(maxf(_volume, 0.0001)))
 	_vol_slider.set_value_no_signal(_volume)
-	_vol_label.text = "볼륨 %d%%" % roundi(_volume * 100.0)
+	_vol_label.text = "%d%%" % roundi(_volume * 100.0)
 	if save and not _auto:
 		_save_cfg()
 
 ## 우측 하단 사운드 UI: 음소거 토글 + 볼륨 슬라이더
+## 게임오버 팝업: 다시하기 / 종료하기
+func _build_over_modal() -> void:
+	_over_modal = Panel.new()
+	_over_modal.size = Vector2(300, 220)
+	_over_modal.position = Vector2((drop_l + drop_r) / 2.0 - 150.0, 250)
+	_over_modal.z_index = 60
+	_over_modal.visible = false
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color("fffaff")
+	sb.border_color = Color("c9bfe8")
+	sb.set_border_width_all(4)
+	sb.set_corner_radius_all(22)
+	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_size = 16
+	_over_modal.add_theme_stylebox_override("panel", sb)
+	add_child(_over_modal)
+	var t := Label.new()
+	t.text = "GAME OVER"
+	t.position = Vector2(0, 20)
+	t.size = Vector2(300, 44)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_font_size_override("font_size", 34)
+	t.add_theme_color_override("font_color", Color("c2477f"))
+	_over_modal.add_child(t)
+	_over_score = Label.new()
+	_over_score.position = Vector2(0, 70)
+	_over_score.size = Vector2(300, 32)
+	_over_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_over_score.add_theme_font_size_override("font_size", 24)
+	_over_score.add_theme_color_override("font_color", Color("4b3f72"))
+	_over_modal.add_child(_over_score)
+	_over_restart = _modal_button("다시하기", Vector2(24, 130), Color("ff8fb8"), Color("c2477f"))
+	_over_restart.pressed.connect(_new_game)
+	_over_modal.add_child(_over_restart)
+	_over_quit = _modal_button("종료하기", Vector2(158, 130), Color("b79bf0"), Color("6a4fb5"))
+	_over_quit.pressed.connect(func(): get_tree().quit())
+	_over_modal.add_child(_over_quit)
+
+func _modal_button(text: String, pos: Vector2, fill: Color, outline: Color) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.position = pos
+	b.size = Vector2(118, 54)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 22)
+	for c in ["font_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(c, Color.WHITE)
+	for st in ["normal", "hover", "pressed"]:
+		var bx := StyleBoxFlat.new()
+		bx.bg_color = fill.lightened(0.12) if st == "hover" else (fill.darkened(0.1) if st == "pressed" else fill)
+		bx.border_color = Color.WHITE
+		bx.set_border_width_all(3)
+		bx.set_corner_radius_all(27)
+		b.add_theme_stylebox_override(st, bx)
+	return b
+
+## 스피커 아이콘(음소거면 빨간 X)
+func _draw_speaker() -> void:
+	var col := Color("7f63c9") if not _muted else Color("a89cc8")
+	_speaker.draw_rect(Rect2(5, 13, 7, 10), col)
+	_speaker.draw_colored_polygon(PackedVector2Array([Vector2(12, 13), Vector2(21, 6), Vector2(21, 30), Vector2(12, 23)]), col)
+	if _muted:
+		_speaker.draw_line(Vector2(25, 12), Vector2(34, 24), Color("e0457b"), 3.0)
+		_speaker.draw_line(Vector2(34, 12), Vector2(25, 24), Color("e0457b"), 3.0)
+	else:
+		_speaker.draw_arc(Vector2(21, 18), 7.0, -0.9, 0.9, 10, col, 2.5)
+		_speaker.draw_arc(Vector2(21, 18), 12.0, -0.9, 0.9, 12, col, 2.5)
+
 func _build_audio_ui() -> void:
 	var box := Panel.new()
 	_audio_box = box
@@ -417,15 +480,21 @@ func _build_audio_ui() -> void:
 	_mute_btn = Button.new()
 	_mute_btn.toggle_mode = true
 	_mute_btn.focus_mode = Control.FOCUS_NONE   # 스페이스/엔터로 눌리지 않게
-	_mute_btn.position = Vector2(8, 6)
-	_mute_btn.size = Vector2(120, 26)
-	_mute_btn.add_theme_font_size_override("font_size", 13)
+	_mute_btn.flat = true
+	_mute_btn.tooltip_text = "음소거 (M)"
+	_mute_btn.position = Vector2(8, 14)
+	_mute_btn.size = Vector2(36, 36)
+	_speaker = Control.new()
+	_speaker.size = _mute_btn.size
+	_speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_speaker.draw.connect(_draw_speaker)
+	_mute_btn.add_child(_speaker)
 	_mute_btn.toggled.connect(func(on: bool): _set_muted(on))
 	box.add_child(_mute_btn)
 
 	_vol_label = Label.new()
-	_vol_label.position = Vector2(166, 8)
-	_vol_label.size = Vector2(88, 22)
+	_vol_label.position = Vector2(196, 20)
+	_vol_label.size = Vector2(60, 22)
 	_vol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_vol_label.add_theme_font_size_override("font_size", 13)
 	_vol_label.add_theme_color_override("font_color", Color("4b3f72"))
@@ -436,8 +505,8 @@ func _build_audio_ui() -> void:
 	_vol_slider.max_value = 1.0
 	_vol_slider.step = 0.01
 	_vol_slider.focus_mode = Control.FOCUS_NONE
-	_vol_slider.position = Vector2(10, 40)
-	_vol_slider.size = Vector2(244, 16)
+	_vol_slider.position = Vector2(52, 24)
+	_vol_slider.size = Vector2(140, 16)
 	var track := StyleBoxFlat.new()
 	track.bg_color = Color("e3d9f5")
 	track.set_corner_radius_all(4)
@@ -527,7 +596,8 @@ func _physics_process(dt: float) -> void:
 			h.danger = 0.0
 		if h.danger > OVER_TIME:
 			over = true
-			_over_label.text = "GAME OVER\n점수 %d\n클릭/R: 다시 시작" % score
+			_over_score.text = "점수 %d" % score
+			_over_modal.visible = true
 			break
 
 func _process(dt: float) -> void:
@@ -698,6 +768,21 @@ func _item_test() -> bool:
 			extra = " target_stage=%d heads %d->%d left_same=%d gauge=%.0f" % [items.last_sword_stage + 1, before, after, left, items.gauge]
 		print("item %-8s used=%s outside=%d moving=%d/%d%s %s" % [id, used, outside, moving, after, extra, "OK" if good else "FAIL"])
 		all_ok = all_ok and good
+	# 대형 노드(8~11단계) 분수 테스트
+	for h in get_tree().get_nodes_in_group("heads"):
+		h.queue_free()
+	await get_tree().process_frame
+	for sp in [[7, 200.0], [9, 330.0], [8, 265.0]]:
+		spawn(sp[0], Vector2(sp[1], 640.0))
+	await get_tree().create_timer(2.5).timeout
+	items.gauge = 100.0
+	items.use("fountain")
+	while items.busy:
+		await get_tree().create_timer(0.1).timeout
+	var big_ok := items.fountain_big_rise >= 100.0 and _count_outside() == 0
+	print("fountain big nodes (stage 8,9,10) max rise=%.0f outside=%d %s" % [items.fountain_big_rise, _count_outside(), "OK" if big_ok else "FAIL"])
+	all_ok = all_ok and big_ok
+	await get_tree().create_timer(2.0).timeout
 	# 명검 조준 취소 시 환불
 	items.gauge = 100.0
 	items.use("sword")
