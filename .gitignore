@@ -2,6 +2,7 @@
 godot/.godot/
 *.import
 *.tmp
+.tmp.driveupload/
 
 # AI agent private instruction files (not shared across agents)
 GEMINI.md
