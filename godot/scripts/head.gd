@@ -9,18 +9,13 @@ const FRESH_MAX_SPEED := 340.0   # 합체 직후 겹침 해소 중에는 천천�
 const FRESH_TIME := 0.5
 const PUSH_RANGE := 1.35    # 합체로 커진 노드가 이웃을 밀어낼 범위(두 반지름 합 기준 배율)
 const PUSH_SPEED := 800.0   # 합체 순간 충격파 최대 속도(px/s)
-const PUSH_UP := 0.45       # 충격파 방향에 섞는 위쪽 성분(좌우가 막혀도 솟구쳐 빠지게)
-const SELF_POP := 160.0     # 합체로 생긴 노드 본인이 위로 튀어오르는 속도(px/s)
+const PUSH_UP := 0.12       # 충격파 방향에 섞는 위쪽 성분(좌우가 막혀도 솟구쳐 빠지게)
+const SELF_POP := 50.0      # 합체로 생긴 노드 본인이 위로 튀어오르는 속도(px/s)
 const MAX_SPIN := 12.0
 const DEPTH_LAYERS := 6
 const DEPTH_STEP := 2.5
-const SHADOW_OFFSET := Vector2(1, 2)   # 노드 크기와 무관한 고정 오프셋(얇은 언더라인 느낌)
-const SHADOW_ALPHA := 0.05           # 극도로 연하게
-const SHADOW_SCALE := 1.0            # 크기 비례 확대/축소 없음
 const ANGULAR_DAMP := 4.0
 const LINEAR_DAMP := 0.15
-const LIGHT_DIR := Vector2(-0.5, -0.7)
-const SHADER := preload("res://shaders/head_lit.gdshader")
 
 static var state_counts := {}   # 검증용: 표정 전환 횟수
 
@@ -30,7 +25,6 @@ var age := 0.0
 var danger := 0.0
 var merging := false
 var _layers: Array[Polygon2D] = []
-var _shadow: Polygon2D
 var _sprite: Sprite2D
 var _mat: ShaderMaterial
 var _base_scale := 1.0
@@ -77,8 +71,6 @@ func setup(st: int) -> void:
 		cs.polygon = piece
 		add_child(cs)
 
-	_shadow = _poly(outline, Color(0, 0, 0, SHADOW_ALPHA), -10)
-	_shadow.scale = Vector2.ONE * SHADOW_SCALE
 	for i in DEPTH_LAYERS:
 		var shade := 0.4 + 0.25 * float(i) / DEPTH_LAYERS
 		_layers.append(_poly(outline, Color(col.r * shade, col.g * shade, col.b * shade), 0))
@@ -89,11 +81,7 @@ func setup(st: int) -> void:
 	_sprite.texture = data["tex"]
 	_sprite.offset = data["size"] / 2.0 - data["centroid"]   # 무게중심 = 바디 원점
 	_sprite.scale = Vector2.ONE * _base_scale
-	_mat = ShaderMaterial.new()
-	_mat.shader = SHADER
-	_mat.set_shader_parameter("light_dir", LIGHT_DIR)
-	_mat.set_shader_parameter("center_uv", data["centroid_uv"])
-	_mat.set_shader_parameter("extent_uv", data["extent_uv"])
+	_mat = HeadShapes.make_material(stage)
 	_sprite.material = _mat
 	_sprite.z_index = 1   # top_level 레이어보다 위에 그리기
 	add_child(_sprite)
@@ -183,8 +171,6 @@ func _physics_process(dt: float) -> void:
 
 func _process(_dt: float) -> void:
 	_mat.set_shader_parameter("body_rot", global_rotation)
-	_shadow.global_position = global_position + SHADOW_OFFSET
-	_shadow.global_rotation = global_rotation
 	for i in _layers.size():
 		var l := _layers[i]
 		l.global_position = global_position + Vector2(0, (_layers.size() - i) * DEPTH_STEP)

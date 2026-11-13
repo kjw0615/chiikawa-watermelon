@@ -6,7 +6,21 @@ const STATES := ["neutral", "surprised", "squash", "happy"]
 const CLOSE_RATIO := 0.10      # 콜라이더 모폴로지 닫기: 반지름 대비 이 비율만큼 팽창->수축해 작은 홈/뾰족한 털을 메움(톱니바퀴처럼 구르거나 끼는 현상 방지)
 const EPSILON := 6.0              # 외곽선 단순화 정도(텍스처 px)
 
+const SHADER := preload("res://shaders/head_lit.gdshader")
+const LIGHT_DIR := Vector2(-0.5, -0.7)
+
 static var _cache := {}
+
+## 2.5D 조명 쉐이더 머티리얼(실제 노드와 드롭 대기 프리뷰가 같은 모습이 되도록 공용)
+static func make_material(stage: int) -> ShaderMaterial:
+	var data := get_data(stage)
+	var m := ShaderMaterial.new()
+	m.shader = SHADER
+	m.set_shader_parameter("light_dir", LIGHT_DIR)
+	m.set_shader_parameter("center_uv", data["centroid_uv"])
+	m.set_shader_parameter("extent_uv", data["extent_uv"])
+	return m
+
 
 static func area_centroid(p: PackedVector2Array) -> Array:
 	var a := 0.0

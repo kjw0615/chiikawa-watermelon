@@ -25,7 +25,8 @@ const SFX := {
 var score := 0
 var best := 0
 var over := false
-var next_stage := 0
+var held_stage := 0   # 지금 마우스를 따라다니며 드롭 대기 중인 노드
+var next_stage := 0   # 진짜 NEXT: 이번 드롭 다음에 나올 노드
 var cooldown := 0.0
 var combo := 0
 var combo_t := 0.0
@@ -42,6 +43,9 @@ var _sep_t := 0.0
 var separations := 0
 var _muted := false
 var _mute_btn: Button
+var _vol_slider: HSlider
+var _vol_label: Label
+var _volume := 1.0
 
 func _ready() -> void:
 	_auto = "--shot" in OS.get_cmdline_user_args()
@@ -54,6 +58,7 @@ func _ready() -> void:
 		_players.append(p)
 	_label = Label.new()
 	_label.position = Vector2(10, 8)
+	_label.add_theme_color_override("font_color", Color("4b3f72"))
 	add_child(_label)
 	_over_label = Label.new()
 	_over_label.position = Vector2(L, 300)
@@ -69,17 +74,14 @@ func _ready() -> void:
 	_preview = Sprite2D.new()
 	_preview.z_index = 20
 	add_child(_preview)
-	_mute_btn = Button.new()
-	_mute_btn.position = Vector2(480, 732)
-	_mute_btn.size = Vector2(230, 40)
-	_mute_btn.focus_mode = Control.FOCUS_NONE   # 스페이스/엔터로 눌리지 않게
-	_mute_btn.pressed.connect(func(): _set_muted(not _muted))
-	add_child(_mute_btn)
+	_build_audio_ui()
 	var cf := ConfigFile.new()
 	if cf.load(SAVE_PATH) == OK:
 		best = cf.get_value("game", "best", 0)
 		_muted = cf.get_value("audio", "muted", false)
+		_volume = clampf(float(cf.get_value("audio", "volume", 1.0)), 0.0, 1.0)
 	# 자체 테스트(--shot/--verify)는 항상 무음 + 설정 파일 미저장
+	_set_volume(_volume, false)
 	_set_muted(true if _auto else _muted, false)
 	_new_game()
 	if verify:
@@ -100,12 +102,21 @@ func _new_game() -> void:
 	_update_hud()
 
 func _roll_next() -> void:
-	next_stage = randi() % (NodeDefs.drop_max_index() + 1)   # 드롭은 1~5단계만, 이후는 합체로만
-	_preview.texture = HeadShapes.get_data(next_stage)["tex"]
-	var d := HeadShapes.get_data(next_stage)
+	held_stage = _rnd_stage()
+	next_stage = _rnd_stage()
+	_show_held()
+
+func _rnd_stage() -> int:
+	return randi() % (NodeDefs.drop_max_index() + 1)   # 드롭은 1~5단계만, 이후는 합체로만
+
+## 드롭 대기 프리뷰: 실제 노드와 같은 조명 쉐이더를 적용해 드롭 전후 밝기를 통일
+func _show_held() -> void:
+	var d := HeadShapes.get_data(held_stage)
+	_preview.texture = d["tex"]
 	_preview.offset = d["size"] / 2.0 - d["centroid"]
 	_preview.scale = Vector2.ONE * d["scale"]
-	_preview.modulate = Color(1, 1, 1, 0.85)
+	_preview.material = HeadShapes.make_material(held_stage)
+	_preview.modulate = Color.WHITE
 	_panel.set_next(next_stage)
 
 func _build_walls() -> void:
@@ -157,9 +168,12 @@ func _unhandled_input(e: InputEvent) -> void:
 			drop(e.position.x)
 
 func drop(x: float) -> void:
-	spawn(next_stage, Vector2(clampf(x, L + NodeDefs.radius(next_stage), R - NodeDefs.radius(next_stage)), DROP_Y))
+	var r := NodeDefs.radius(held_stage)
+	spawn(held_stage, Vector2(clampf(x, L + r, R - r), DROP_Y))
 	cooldown = DROP_COOLDOWN
-	_roll_next()
+	held_stage = next_stage
+	next_stage = _rnd_stage()
+	_show_held()
 
 func spawn(stage: int, pos: Vector2, vel: Vector2 = Vector2.ZERO) -> Head:
 	var h := Head.new()
@@ -213,9 +227,73 @@ func _merge(a: Head, b: Head) -> void:
 func _set_muted(m: bool, save := true) -> void:
 	_muted = m
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), m)
+	_mute_btn.set_pressed_no_signal(m)
 	_mute_btn.text = "소리 꺼짐 (M)" if m else "소리 켜짐 (M)"
+	_vol_slider.editable = not m
 	if save and not _auto:
 		_save_cfg()
+
+func _set_volume(v: float, save := true) -> void:
+	_volume = clampf(v, 0.0, 1.0)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(maxf(_volume, 0.0001)))
+	_vol_slider.set_value_no_signal(_volume)
+	_vol_label.text = "볼륨 %d%%" % roundi(_volume * 100.0)
+	if save and not _auto:
+		_save_cfg()
+
+## 우측 하단 사운드 UI: 음소거 토글 + 볼륨 슬라이더
+func _build_audio_ui() -> void:
+	var box := Panel.new()
+	box.position = Vector2(480, 728)
+	box.size = Vector2(230, 64)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color("fffaff")
+	sb.border_color = Color("c9bfe8")
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(12)
+	box.add_theme_stylebox_override("panel", sb)
+	add_child(box)
+
+	_mute_btn = Button.new()
+	_mute_btn.toggle_mode = true
+	_mute_btn.focus_mode = Control.FOCUS_NONE   # 스페이스/엔터로 눌리지 않게
+	_mute_btn.position = Vector2(8, 6)
+	_mute_btn.size = Vector2(120, 26)
+	_mute_btn.add_theme_font_size_override("font_size", 13)
+	_mute_btn.toggled.connect(func(on: bool): _set_muted(on))
+	box.add_child(_mute_btn)
+
+	_vol_label = Label.new()
+	_vol_label.position = Vector2(136, 8)
+	_vol_label.size = Vector2(88, 22)
+	_vol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_vol_label.add_theme_font_size_override("font_size", 13)
+	_vol_label.add_theme_color_override("font_color", Color("4b3f72"))
+	box.add_child(_vol_label)
+
+	_vol_slider = HSlider.new()
+	_vol_slider.min_value = 0.0
+	_vol_slider.max_value = 1.0
+	_vol_slider.step = 0.01
+	_vol_slider.focus_mode = Control.FOCUS_NONE
+	_vol_slider.position = Vector2(10, 40)
+	_vol_slider.size = Vector2(210, 16)
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color("e3d9f5")
+	track.set_corner_radius_all(4)
+	track.content_margin_top = 4
+	track.content_margin_bottom = 4
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color("b79bf0")
+	fill.set_corner_radius_all(4)
+	fill.content_margin_top = 4
+	fill.content_margin_bottom = 4
+	_vol_slider.add_theme_stylebox_override("slider", track)
+	_vol_slider.add_theme_stylebox_override("grabber_area", fill)
+	_vol_slider.add_theme_stylebox_override("grabber_area_highlight", fill)
+	_vol_slider.value_changed.connect(func(v: float): _set_volume(v, false))   # 실시간 반영
+	_vol_slider.drag_ended.connect(func(_changed: bool): _save_cfg())          # 놓을 때 저장
+	box.add_child(_vol_slider)
 
 func _save_cfg() -> void:
 	if _auto:
@@ -224,6 +302,7 @@ func _save_cfg() -> void:
 	cf.load(SAVE_PATH)
 	cf.set_value("game", "best", best)
 	cf.set_value("audio", "muted", _muted)
+	cf.set_value("audio", "volume", _volume)
 	cf.save(SAVE_PATH)
 
 ## 끼임 안전장치: 서로 콜라이더가 깊게 겹친 쌍을 찾아 겹친 깊이만큼 중심 반대 방향으로 위치를 보정하고 살짝 밀어 분리
@@ -298,7 +377,7 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _update_hud() -> void:
-	_label.text = "점수 %d   최고 %d   다음: %s" % [score, best, NodeDefs.node_name(next_stage)]
+	_label.text = "점수 %d   최고 %d" % [score, best]
 
 ## --shot: 자동 드롭 시뮬레이션 후 스크린샷/통계 출력
 func _run_auto() -> void:
