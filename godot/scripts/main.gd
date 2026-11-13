@@ -79,6 +79,11 @@ var _skill_bar: SkillBar
 var last_play_x := 240.0   # 마우스가 마지막으로 있던 플레이 영역 x(명검 낙하 위치)
 var drop_l := 60.0    # 드롭선(y=DROP_Y) 높이에서의 벽 안쪽 x 범위(윤곽에서 계산)
 var drop_r := 410.0
+enum State { TITLE, PLAYING }
+var state := State.TITLE
+var _title: TitleScreen
+var _audio_box: Panel
+var _credit: Label   # 게임 화면 구석의 면책 문구
 var _art_bg: Sprite2D
 var _art_fg: Sprite2D
 var _cave: PackedVector2Array   # 동굴 윤곽 폴리라인(왼쪽 위 -> 바닥 -> 오른쪽 위)
@@ -86,7 +91,8 @@ var _cave: PackedVector2Array   # 동굴 윤곽 폴리라인(왼쪽 위 -> 바�
 func _ready() -> void:
 	_auto = "--shot" in OS.get_cmdline_user_args()
 	var verify := "--verify" in OS.get_cmdline_user_args()
-	_auto = _auto or verify   # 자체 테스트 모드
+	var title_test := "--title-test" in OS.get_cmdline_user_args()
+	_auto = _auto or verify or title_test   # 자체 테스트 모드
 	_build_cave()
 	_build_walls()
 	_art_bg = _make_art(BG_ART, -100)
@@ -138,11 +144,55 @@ func _ready() -> void:
 	# 자체 테스트(--shot/--verify)는 항상 무음 + 설정 파일 미저장
 	_set_volume(_volume, false)
 	_set_muted(true if _auto else _muted, false)
+	_build_credit()
 	_new_game()
-	if verify:
+	if _auto and not title_test:
+		_set_state(State.PLAYING)   # 자체 테스트는 타이틀을 건너뜀
+	else:
+		_title = TitleScreen.new()
+		_title.size = Vector2(730, 800)
+		add_child(_title)
+		_title.start_pressed.connect(_start_game)
+		_set_state(State.TITLE)
+	if title_test:
+		_run_title_test()
+	elif verify:
 		_run_verify()
 	elif _auto:
 		_run_auto()
+
+func _build_credit() -> void:
+	_credit = Label.new()
+	_credit.text = TitleScreen.DISCLAIMER_KO + "\n" + TitleScreen.DISCLAIMER_EN
+	_credit.position = Vector2(6, 764)
+	_credit.size = Vector2(468, 34)
+	_credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_credit.add_theme_font_size_override("font_size", 9)
+	_credit.add_theme_color_override("font_color", Color("ffffff"))
+	_credit.add_theme_color_override("font_outline_color", Color("2d2552"))
+	_credit.add_theme_constant_override("outline_size", 3)
+	_credit.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_credit.z_index = 45
+	add_child(_credit)
+
+## 상태 머신: TITLE(타이틀 화면) -> PLAYING(게임)
+func _set_state(st: State) -> void:
+	state = st
+	var playing := st == State.PLAYING
+	for n in [_panel, _skill_bar, _audio_box, _label, _credit]:
+		n.visible = playing
+	if not playing:
+		_over_label.text = ""
+	_preview.visible = false
+
+func _start_game() -> void:
+	if state != State.TITLE:
+		return
+	if _title != null:
+		_title.queue_free()
+		_title = null
+	_set_state(State.PLAYING)
+	_new_game()
 
 func _new_game() -> void:
 	for h in get_tree().get_nodes_in_group("heads"):
@@ -255,6 +305,8 @@ func _draw() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
 		_set_muted(not _muted)
+	elif state != State.PLAYING:
+		return
 	elif e is InputEventKey and e.pressed and e.keycode == KEY_R:
 		_new_game()
 	elif e is InputEventKey and e.pressed and e.keycode >= KEY_1 and e.keycode <= KEY_4:
@@ -343,6 +395,7 @@ func _set_volume(v: float, save := true) -> void:
 ## 우측 하단 사운드 UI: 음소거 토글 + 볼륨 슬라이더
 func _build_audio_ui() -> void:
 	var box := Panel.new()
+	_audio_box = box
 	box.position = Vector2(480, 728)
 	box.size = Vector2(230, 64)
 	var sb := StyleBoxFlat.new()
@@ -447,6 +500,8 @@ func _play(name: String, vol: float) -> void:
 	p.play()
 
 func _physics_process(dt: float) -> void:
+	if state != State.PLAYING:
+		return
 	_sep_t += dt
 	if _sep_t >= SEP_INTERVAL:
 		_sep_t = 0.0
@@ -473,7 +528,7 @@ func _process(dt: float) -> void:
 	if mx > drop_l and mx < drop_r:
 		last_play_x = mx
 	_preview.position = Vector2(clampf(mx, drop_l + 20, drop_r - 20), DROP_Y)
-	_preview.visible = not over and cooldown <= 0.0
+	_preview.visible = state == State.PLAYING and not over and cooldown <= 0.0
 	for p in pops:
 		p["t"] += dt
 	pops = pops.filter(func(p): return p["t"] < 0.3)
@@ -639,3 +694,36 @@ func _save_shot(path: String) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	get_viewport().get_texture().get_image().save_png(path)
+
+## --title-test: 타이틀 -> 게임 시작 상태 전환 검증(창 없이 --headless 로 실행)
+func _run_title_test() -> void:
+	await get_tree().create_timer(0.4).timeout
+	var ok := true
+	var title_ok := state == State.TITLE and _title != null and not _panel.visible and not _label.visible
+	title_ok = title_ok and _title.start_button.text == "게임 시작" and TitleScreen.TITLE_KO == "치이카와 수박게임"
+	print("title shown: state=TITLE ui_hidden=%s %s" % [not _panel.visible, "OK" if title_ok else "FAIL"])
+	ok = ok and title_ok
+	_unhandled_input_blocked_check()
+	_title.start_button.pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	var play_ok := state == State.PLAYING and _title == null and _panel.visible and _credit.visible and _credit.text.contains("비영리 팬 메이드") and _credit.text.contains("Nagano / Chiikawa Committee")
+	print("start pressed: state=PLAYING ui_visible=%s credit=%s %s" % [_panel.visible, _credit.visible, "OK" if play_ok else "FAIL"])
+	ok = ok and play_ok
+	cooldown = 0.0
+	drop(240.0)
+	await get_tree().create_timer(0.3).timeout
+	var drop_ok := get_tree().get_nodes_in_group("heads").size() == 1
+	print("drop after start: heads=%d %s" % [get_tree().get_nodes_in_group("heads").size(), "OK" if drop_ok else "FAIL"])
+	ok = ok and drop_ok
+	print("TITLE TEST ", "PASS" if ok else "FAIL")
+	get_tree().quit()
+
+## 타이틀 상태에서는 드롭/아이템 입력이 막히는지 확인
+func _unhandled_input_blocked_check() -> void:
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = Vector2(240, 300)
+	_unhandled_input(ev)
+	var blocked := get_tree().get_nodes_in_group("heads").size() == 0
+	print("title blocks drop: %s %s" % [blocked, "OK" if blocked else "FAIL"])
