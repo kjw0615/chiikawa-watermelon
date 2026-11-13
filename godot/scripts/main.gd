@@ -62,6 +62,7 @@ var merges := 0
 var pops: Array = []
 var _over_modal: Panel
 var _over_score: Label
+var _pause_menu: PauseMenu
 var _over_restart: Button
 var _over_quit: Button
 var _panel: SidePanel
@@ -133,6 +134,8 @@ func _ready() -> void:
 	_set_volume(_volume, false)
 	_set_muted(true if _auto else _muted, false)
 	_build_credit()
+	_pause_menu = PauseMenu.new()
+	add_child(_pause_menu)
 	_new_game()
 	if _auto and not title_test:
 		_set_state(State.PLAYING)   # 자체 테스트는 타이틀을 건너뜀
@@ -294,8 +297,10 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
 		if items.aiming:
 			items.cancel_aim()   # 조준 중 ESC 는 취소(환불)
+		elif state == State.PLAYING and not over:
+			_pause_menu.open()   # 인게임 ESC: 일시정지 메뉴
 		else:
-			get_tree().quit()    # 그 외에는 ESC 로 즉시 종료
+			get_tree().quit()    # 타이틀/게임오버에서는 ESC 로 종료
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
 		_set_muted(not _muted)
@@ -821,6 +826,16 @@ func _run_title_test() -> void:
 	var play_ok := state == State.PLAYING and _title == null and _panel.visible and _credit.visible and _credit.text.contains("비영리 팬 메이드") and _credit.text.contains("Nagano / Chiikawa Committee")
 	print("start pressed: state=PLAYING ui_visible=%s credit=%s %s" % [_panel.visible, _credit.visible, "OK" if play_ok else "FAIL"])
 	ok = ok and play_ok
+	# ESC 일시정지 메뉴: 열면 트리 정지 + 드롭 차단, 닫으면 재개
+	var esc := InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.pressed = true
+	_unhandled_input(esc)
+	var pause_ok := _pause_menu.is_open() and get_tree().paused
+	_pause_menu._unhandled_input(esc)   # 다시 ESC -> 계속하기
+	pause_ok = pause_ok and not _pause_menu.is_open() and not get_tree().paused
+	print("pause menu open/ESC-close %s" % ["OK" if pause_ok else "FAIL"])
+	ok = ok and pause_ok
 	cooldown = 0.0
 	drop(240.0)
 	await get_tree().create_timer(0.3).timeout
