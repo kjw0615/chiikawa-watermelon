@@ -93,13 +93,13 @@ func _shake() -> void:
 	busy = false
 	changed.emit()
 
-# ② 교환권: 티켓이 찢어지는 컷인(NEXT 박스 부근) 도중에 대기 노드가 바뀐다
+# ② 교환권: 손에 쥔 노드 위치에서 티켓이 찢어지는 컷인 도중 그 노드가 다른 노드로 바뀐다(사이드바 UI z=40/41 보다 위에 그림)
 func _swap() -> void:
 	busy = true
 	changed.emit()
-	var fx := EffectSprite.spawn(main, "bazaar_ticket.png", Vector2(652, 270), 0.8, 12.0)
+	var fx := EffectSprite.spawn(main, "bazaar_ticket.png", Vector2(clampf(main._preview.position.x, main.drop_l + 60.0, main.drop_r - 60.0), main.DROP_Y + 110.0), 0.85, 12.0)
 	await get_tree().create_timer(0.25).timeout
-	main.reroll_next()
+	main.reroll_held()
 	if is_instance_valid(fx):
 		await fx.finished
 	busy = false

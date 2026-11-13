@@ -203,15 +203,17 @@ func _roll_next() -> void:
 	next_stage = _rnd_stage()
 	_show_held()
 
-## 교환권: NEXT 노드를 다른 1~5단계 노드로 바꿈
-func reroll_next() -> void:
-	var s := next_stage
+## 교환권: 지금 손에 쥔(드롭 대기 중인) 노드를 다른 1~5단계 노드로 바꿈
+func reroll_held() -> void:
+	var s := held_stage
 	var tries := 0
-	while s == next_stage and tries < 16:
+	while s == held_stage and tries < 16:
 		s = _rnd_stage()
 		tries += 1
-	next_stage = s
-	_panel.set_next(next_stage)
+	held_stage = s
+	_show_held()
+	_preview.scale = Vector2.ONE * HeadShapes.get_data(held_stage)["scale"] * 1.25   # 뿅 하고 바뀌는 팝
+	create_tween().tween_property(_preview, "scale", Vector2.ONE * HeadShapes.get_data(held_stage)["scale"], 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _rnd_stage() -> int:
 	return randi() % (NodeDefs.drop_max_index() + 1)   # 드롭은 1~5단계만, 이후는 합체로만
@@ -738,6 +740,7 @@ func _item_test() -> bool:
 		items.gauge = 100.0
 		var before := get_tree().get_nodes_in_group("heads").size()
 		var prev_next := next_stage
+		var prev_held := held_stage
 		var heads := get_tree().get_nodes_in_group("heads")
 		if id == "sword" and heads.size() > 0:
 			last_play_x = (heads[randi() % heads.size()] as Head).position.x
@@ -758,8 +761,8 @@ func _item_test() -> bool:
 		var extra := ""
 		var good := used and outside == 0 and moving <= maxi(2, after / 6)
 		if id == "swap":
-			good = good and next_stage != prev_next and next_stage <= NodeDefs.drop_max_index() and is_equal_approx(items.gauge, 70.0)
-			extra = " next %d->%d gauge=%.0f" % [prev_next + 1, next_stage + 1, items.gauge]
+			good = good and held_stage != prev_held and held_stage <= NodeDefs.drop_max_index() and next_stage == prev_next and is_equal_approx(items.gauge, 70.0)
+			extra = " held %d->%d (next %d->%d) gauge=%.0f" % [prev_held + 1, held_stage + 1, prev_next + 1, next_stage + 1, items.gauge]
 		elif id == "fountain":
 			good = good and items.fountain_peak_y < 420.0 and items.fountain_peak_y > 120.0
 			extra = " peak_y=%.0f (target ~350-400)" % items.fountain_peak_y

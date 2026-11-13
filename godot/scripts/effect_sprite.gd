@@ -22,7 +22,7 @@ static func spawn(parent: Node, sheet: String, pos: Vector2, sc: float, fps: flo
 	e.offset = Vector2(0, 128.0 - 240.0)   # 원점을 발끝 기준점으로
 	e.position = pos
 	e.scale = Vector2.ONE * sc * 0.6
-	e.z_index = 35
+	e.z_index = 55   # 사이드바 UI(40/41)와 동굴 아트 위
 	e._fps = fps
 	e._duration = duration
 	e._end = duration if duration >= 0.0 else FRAMES / fps + 0.1
