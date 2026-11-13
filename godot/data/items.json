@@ -1,0 +1,15 @@
+{
+  "_comment": "단일 100% 게이지. gain: 합체한 노드 단계(1~11) 구간별 충전 %. items: 비용(차감 %), 배열 순서 = 버튼/단축키 1~4. icon 은 코덱스 아이콘 경로(파일이 없으면 임시 글자 아이콘).",
+  "gauge_max": 100,
+  "gain": [
+    {"from": 1, "to": 3, "pct": 8},
+    {"from": 4, "to": 7, "pct": 15},
+    {"from": 8, "to": 11, "pct": 30}
+  ],
+  "items": [
+    {"id": "shake",    "name": "엉덩이 흔들기", "full_name": "우사기 엉덩이 흔들기", "cost": 50,  "glyph": "흔", "icon": "res://assets/icons/item_shake.png"},
+    {"id": "swap",     "name": "교환권",       "full_name": "바자회의 교환권",     "cost": 30,  "glyph": "교", "icon": "res://assets/icons/item_swap.png"},
+    {"id": "sword",    "name": "명검 투하",     "full_name": "랏코의 명검 투하",     "cost": 100, "glyph": "검", "icon": "res://assets/icons/item_sword.png"},
+    {"id": "fountain", "name": "음식 분수",     "full_name": "음식 분수",          "cost": 80,  "glyph": "분", "icon": "res://assets/icons/item_fountain.png"}
+  ]
+}

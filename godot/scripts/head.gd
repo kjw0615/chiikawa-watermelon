@@ -90,6 +90,18 @@ func pop_in() -> void:
 	_mat.set_shader_parameter("flash", 0.15)
 	t.parallel().tween_method(func(v: float): _mat.set_shader_parameter("flash", v), 0.15, 0.0, 0.25)
 
+## 아이템 등으로 필드에서 제거: 충돌/그룹에서 빠지고 작아지며 사라짐
+func vanish() -> void:
+	merging = true
+	remove_from_group("heads")
+	for c in get_children():
+		if c is CollisionPolygon2D:
+			c.set_deferred("disabled", true)
+	set_deferred("freeze", true)
+	var t := create_tween()
+	t.tween_property(_sprite, "scale", Vector2.ZERO, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	t.tween_callback(queue_free)
+
 ## 착지 시 찌그러짐
 func squash() -> void:
 	_squash_t = 0.25
