@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "date": "2026-11-14",
+  "map_status": "user_approved",
+  "scene_connected": false,
+  "branch": "feat/codex-cave-assets-icons",
+  "creative_workflow": "built-in image_gen",
+  "mechanical_export": "Godot Image RGBA export; icons aspect-fit into 128x128 transparent canvas",
+  "assets": [
+    {
+      "id": "cave_background",
+      "master": "masters/cave_background.png",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: precise-object-edit / background-extraction. Input is the APPROVED cave map review image. Produce ONLY the BACKGROUND PLATE layer for Godot, exactly same portrait canvas 1024x1536 and registration as reference. REMOVE ALL TEXT (title, subtitle, footer) and remove ALL turquoise/cyan collision guide strokes completely, inpaint their former locations naturally. Preserve original indigo/lavender/blue atmosphere, soft top-down light, tall empty playable chamber and distant sea depth. Remove the NEAR rocky side cliffs and near floor/water foreground that belong on a separate foreground layer; naturally paint continuous quiet hazy blue/lavender cavern mist behind their former regions, so the plate has no cliff silhouette seams or gaps when foreground rocks are later overlaid. Very subtle distant rock haze and distant water below the old floor level only; center remains quiet light blue and clear for character faces. Maintain original framing and top/bottom colors, no new scene composition or objects. The plate fills almost the entire canvas but has a soft approximately 12-pixel feather to TRUE TRANSPARENCY along the outermost edges of the canvas; the central play-area atmosphere must remain solid opaque. No checkerboard. No cyan outlines, no line-shaped glow, no labels, no characters, no props, no hard frame. Output a genuine transparent-background RGBA PNG layer, not a composite board.",
+      "reference": "art/drafts/cave_map_v1/review.png (approved; feat/codex-cave-map-v1, PR #5)"
+    },
+    {
+      "id": "cave_foreground",
+      "master": "masters/cave_foreground.png",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: background-extraction / precise-object-edit. Input is the APPROVED cave map review image. Produce ONLY the FOREGROUND ROCK FRAME layer for Godot on EXACT same 1024x1536 portrait canvas and exact original pixel registration. Keep the original left and right dark indigo/lavender wet rock cliffs, their smooth inward edges, the broad flat bottom rock ledge around y1300 and the small near tidal water/ripples at the bottom. Preserve these shapes and positions without scaling, reframing, inventing overhangs or a roof. Remove the empty central blue mist/atmosphere entirely to TRUE ALPHA TRANSPARENCY so the center from open top down to the flat rock ledge is a very large transparent hole. Remove ALL original title/subtitle/footer lettering and ALL turquoise/cyan collision guide lines completely, reconstruct natural rock edge/texture underneath so no artificial bright continuous outline remains. Keep only natural localized teal wet reflections, no guide-like continuous stroke. Outside the rock/water silhouettes must also be genuine transparent alpha. Do not replace removed center with black, white or checkerboard. No background behind the cliffs, no text, no characters, no labels, no UI. This is a precisely registered cutout layer of the existing rock frame, not a redesigned image. Output transparent PNG with opaque rock interiors, smooth alpha edges and partially transparent water detail.",
+      "reference": "art/drafts/cave_map_v1/review.png (approved; feat/codex-cave-map-v1, PR #5)"
+    },
+    {
+      "id": "item01_usagi_shake",
+      "master": "masters/item01_usagi_shake.png",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: stylized-concept. Asset type: one Godot game button icon. Intended final display 128x128 pixels, so use a bold SIMPLE highly legible compact silhouette with generous 10% transparent padding. One centered symbol, no icon tile, no square/circular background, no border, no text, no letters/numbers, no watermark, no detached particles outside silhouette. Genuine transparent alpha background. Consistent cute Chiikawa-adjacent style: warm dark-brown clean outline, pastel cream/pink/sky-blue, subtle soft 2.5D shading, no photorealism, no excessive detail. All contents inside frame. Subject: Usagi's silly bottom-shaking skill. A small pale buttery-yellow bunny rear/bottom viewed from BEHIND, two small rounded feet visible underneath, tiny white round tail. Bold curved LEFT and RIGHT motion arrows in warm orange flank the bunny bottom to clearly indicate horizontal shake. No face, no full standing character, no extra hands. Playful family-friendly cartoon animal rump, no anatomical detail. Two ears not required; prioritize bottom/footprint and horizontal motion readability.",
+      "reference": null
+    },
+    {
+      "id": "item02_bazaar_ticket",
+      "master": "masters/item02_bazaar_ticket.png",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: stylized-concept. One SIMPLE FLAT game icon of a pastel pink exchange ticket with two bold sky-blue opposing arrows in its center, warm dark brown outline, tiny perforation marks at right. Square 1:1 transparent canvas. Ticket occupies 82% of canvas width and about 58% height, centered. Clean vector-like cartoon flat colors. Crisp opaque paper and outline. ABSOLUTELY NO OUTER GLOW, NO shadow, NO bloom, NO blur, NO colored haze, NO background rectangle, NO badge, NO scene, NO lighting effects. Outside ticket must be fully transparent alpha immediately beyond narrow antialiased outline. No text. Easily readable at 128x128. A flat game inventory icon matching cute Chiikawa pastel UI.",
+      "reference": null
+    },
+    {
+      "id": "item03_rakko_sword",
+      "master": "masters/item03_rakko_sword.png",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: stylized-concept. Asset type: one Godot game button icon. Intended final display 128x128 pixels, so use a bold SIMPLE highly legible compact silhouette with generous 10% transparent padding. One centered symbol, no icon tile, no square/circular background, no border, no text, no letters/numbers, no watermark, no detached particles outside silhouette. Genuine transparent alpha background. Consistent cute Chiikawa-adjacent style: warm dark-brown clean outline, pastel cream/pink/sky-blue, subtle soft 2.5D shading, no photorealism, no excessive detail. All contents inside frame. Subject: Rakko's monster-hunting sword, a simple silver-gray straight diamond-point double-edged blade with a dark brown wrapped grip and a simple small brown crossguard, pointing diagonally downward. ONE distinctive gold FOUR-POINT STAR sparkle beside the blade evokes Rakko's star forehead scar. No hand, no scabbard, no character face. Clear sword+star silhouette at small size.",
+      "reference": null
+    },
+    {
+      "id": "item05_food_fountain",
+      "master": "masters/item05_food_fountain.png",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: stylized-concept. Asset type: one Godot game button icon. Intended final display 128x128 pixels, so use a bold SIMPLE highly legible compact silhouette with generous 10% transparent padding. One centered symbol, no icon tile, no square/circular background, no border, no text, no letters/numbers, no watermark, no detached particles outside silhouette. Genuine transparent alpha background. Consistent cute Chiikawa-adjacent style: warm dark-brown clean outline, pastel cream/pink/sky-blue, subtle soft 2.5D shading, no photorealism, no excessive detail. All contents inside frame. Subject: a spring of FOOD rising vertically from a tiny turquoise water splash at the bottom. One bold upward aqua fountain jet lifts a small golden bread roll and one cream rice-ball-shaped food morsel above it, with a few compact curved water droplets attached to the fountain silhouette. Read clearly as an UPWARD FOOD FOUNTAIN, not a drinking glass or a downward waterfall. Keep elements few and chunky for 128px readability.",
+      "reference": null
+    }
+  ]
+}
