@@ -5,6 +5,7 @@ extends Node
 
 signal changed
 
+const SHAKE_ANIM_TIME := 1.4   # 우사기 엉덩이 흔들기 연출 길이(초)
 const SHAKE_PULSES := 3
 const SHAKE_INTERVAL := 0.18
 const SHAKE_SPEED := 260.0      # 좌우 반발 펄스 속도(px/s)
@@ -26,7 +27,7 @@ var _fountain_t := 0.0
 var fountain_big_rise := 0.0      # 8단계 이상 노드가 분수로 솟은 최대 높이(검증용)
 var _big_rest := {}
 var fountain_peak_y := 9999.0   # 분수 중 노드가 도달한 가장 높은 y(검증용)
-var _particles: CPUParticles2D
+var _particles: Node2D
 
 func add_gauge_for_stage(stage_no: int) -> void:
 	gauge = minf(gauge + ItemDefs.gain_for_stage(stage_no), ItemDefs.gauge_max())
@@ -61,7 +62,7 @@ func use_by_index(i: int) -> bool:
 
 func _run(id: String) -> void:
 	match id:
-		"swap": main.reroll_next()
+		"swap": _swap()
 		"shake": _shake()
 		"sword": _sword()
 		"fountain": _fountain()
@@ -73,6 +74,7 @@ func _heads() -> Array:
 func _shake() -> void:
 	busy = true
 	changed.emit()
+	var fx := EffectSprite.spawn(main, "usagi_shake.png", Vector2((main.L + main.R) / 2.0, 250.0), 1.1, 10.0, SHAKE_ANIM_TIME)
 	var heads := _heads()
 	heads.sort_custom(func(a, b): return a.position.x < b.position.x)
 	for pulse in SHAKE_PULSES:
@@ -86,6 +88,20 @@ func _shake() -> void:
 			h.angular_velocity += dir * randf_range(1.0, 3.0)
 			h.squash()
 		await get_tree().create_timer(SHAKE_INTERVAL).timeout
+	if is_instance_valid(fx):
+		await fx.finished
+	busy = false
+	changed.emit()
+
+# ② 교환권: 티켓이 찢어지는 컷인(NEXT 박스 부근) 도중에 대기 노드가 바뀐다
+func _swap() -> void:
+	busy = true
+	changed.emit()
+	var fx := EffectSprite.spawn(main, "bazaar_ticket.png", Vector2(652, 270), 0.8, 12.0)
+	await get_tree().create_timer(0.25).timeout
+	main.reroll_next()
+	if is_instance_valid(fx):
+		await fx.finished
 	busy = false
 	changed.emit()
 
@@ -131,6 +147,8 @@ func cancel_aim(refund := true) -> void:
 	changed.emit()
 
 func _on_sword_hit(target: Head) -> void:
+	var sc := clampf(NodeDefs.radius(target.stage) / 70.0, 0.8, 1.5)
+	EffectSprite.spawn(main, "rakko_slash.png", target.position + Vector2(0, 40), sc, 12.0)   # 랏코 베기 참격
 	last_sword_stage = target.stage
 	var victims: Array = []
 	for h in _heads():
@@ -164,32 +182,43 @@ func _fountain() -> void:
 		_particles = _make_particles()
 		main.add_child(_particles)
 	_particles.position = Vector2((main.L + main.R) / 2.0, main.FLOOR_Y - 8.0)
-	_particles.restart()
-	_particles.emitting = true
+	_set_fountain_emitting(true)
 	changed.emit()
 
-func _make_particles() -> CPUParticles2D:
-	var p := CPUParticles2D.new()
-	p.amount = 70
-	p.lifetime = 1.0
-	p.one_shot = false
-	p.explosiveness = 0.0
-	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	p.emission_rect_extents = Vector2(50, 4)
-	p.direction = Vector2(0, -1)
-	p.spread = 28.0
-	p.initial_velocity_min = 520.0
-	p.initial_velocity_max = 820.0
-	p.gravity = Vector2(0, 1400)
-	p.scale_amount_min = 3.0
-	p.scale_amount_max = 6.0
-	var grad := Gradient.new()
-	grad.colors = PackedColorArray([Color("ffe9a8"), Color("ffb3c7"), Color("a8dcff")])
-	grad.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-	p.color_ramp = grad
-	p.z_index = 25
-	p.emitting = false
-	return p
+func _make_particles() -> Node2D:
+	# 음식 9종을 각각 한 줄기 파티클로 뿜는 멀티 파티클 분수
+	var root := Node2D.new()
+	root.z_index = 25
+	for i in 9:
+		var p := CPUParticles2D.new()
+		p.texture = load("res://assets/effects/food/food_%02d.png" % (i + 1))
+		p.amount = 7
+		p.lifetime = 1.3
+		p.one_shot = false
+		p.explosiveness = 0.0
+		p.randomness = 0.6
+		p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		p.emission_rect_extents = Vector2(60, 4)
+		p.direction = Vector2(0, -1)
+		p.spread = 30.0
+		p.initial_velocity_min = 650.0
+		p.initial_velocity_max = 1000.0
+		p.gravity = Vector2(0, 1400)
+		p.angle_min = -30.0
+		p.angle_max = 30.0
+		p.angular_velocity_min = -240.0
+		p.angular_velocity_max = 240.0
+		p.scale_amount_min = 0.5
+		p.scale_amount_max = 0.8
+		p.emitting = false
+		root.add_child(p)
+	return root
+
+func _set_fountain_emitting(on: bool) -> void:
+	for p in _particles.get_children():
+		(p as CPUParticles2D).emitting = on
+		if on:
+			(p as CPUParticles2D).restart()
 
 func _physics_process(dt: float) -> void:
 	if _fountain_t <= 0.0:
@@ -223,7 +252,7 @@ func _physics_process(dt: float) -> void:
 				_big_rest[id] = h.position.y
 			fountain_big_rise = maxf(fountain_big_rise, _big_rest[id] - h.position.y)
 	if _fountain_t <= 0.0:
-		_particles.emitting = false
+		_set_fountain_emitting(false)
 		suppress_over = false
 		busy = false
 		changed.emit()
