@@ -1,6 +1,6 @@
 class_name Head
 extends RigidBody2D
-## 비정형 머리 1개. 2D 물리(알파 외곽선 -> 볼록 분해 콜라이더) + 2.5D 연출(압출 레이어, 드롭 섀도, 광원 쉐이더).
+## 비정형 머리 1개. 2D 물리(알파 외곽선 -> 볼록 분해 콜라이더) + 2.5D 연출(광원 쉐이더(납작한 원본 스프라이트)).
 
 signal touched(head: Head, other: Node, speed: float)
 
@@ -12,8 +12,6 @@ const PUSH_SPEED := 800.0   # 합체 순간 충격파 최대 속도(px/s)
 const PUSH_UP := 0.12       # 충격파 방향에 섞는 위쪽 성분(좌우가 막혀도 솟구쳐 빠지게)
 const SELF_POP := 50.0      # 합체로 생긴 노드 본인이 위로 튀어오르는 속도(px/s)
 const MAX_SPIN := 12.0
-const DEPTH_LAYERS := 6
-const DEPTH_STEP := 2.5
 const ANGULAR_DAMP := 4.0
 const LINEAR_DAMP := 0.15
 
@@ -24,7 +22,6 @@ var top_extent := 0.0
 var age := 0.0
 var danger := 0.0
 var merging := false
-var _layers: Array[Polygon2D] = []
 var _sprite: Sprite2D
 var _mat: ShaderMaterial
 var _base_scale := 1.0
@@ -41,7 +38,6 @@ func setup(st: int) -> void:
 	stage = st
 	var data := HeadShapes.get_data(stage)
 	var outline: PackedVector2Array = data["outline"]
-	var col: Color = data["color"]
 	top_extent = data["top"]
 
 	mass = pow(maxf(data["area"] / 2500.0, 0.2), 0.7)   # 대형 노드가 소형을 튕겨내지 않도록 질량비 압축
@@ -71,9 +67,6 @@ func setup(st: int) -> void:
 		cs.polygon = piece
 		add_child(cs)
 
-	for i in DEPTH_LAYERS:
-		var shade := 0.4 + 0.25 * float(i) / DEPTH_LAYERS
-		_layers.append(_poly(outline, Color(col.r * shade, col.g * shade, col.b * shade), 0))
 
 	_base_scale = data["scale"]
 	_texs = data["texs"]
@@ -83,17 +76,7 @@ func setup(st: int) -> void:
 	_sprite.scale = Vector2.ONE * _base_scale
 	_mat = HeadShapes.make_material(stage)
 	_sprite.material = _mat
-	_sprite.z_index = 1   # top_level 레이어보다 위에 그리기
 	add_child(_sprite)
-
-func _poly(pts: PackedVector2Array, col: Color, z: int) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = pts
-	p.color = col
-	p.top_level = true   # 회전은 따라가되 오프셋은 월드 기준으로 직접 갱신
-	p.z_index = z
-	add_child(p)
-	return p
 
 ## 생성/합체 직후 커지며 등장
 func pop_in() -> void:
@@ -171,7 +154,3 @@ func _physics_process(dt: float) -> void:
 
 func _process(_dt: float) -> void:
 	_mat.set_shader_parameter("body_rot", global_rotation)
-	for i in _layers.size():
-		var l := _layers[i]
-		l.global_position = global_position + Vector2(0, (_layers.size() - i) * DEPTH_STEP)
-		l.global_rotation = global_rotation
