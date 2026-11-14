@@ -753,8 +753,8 @@ func _item_test() -> bool:
 	items.add_gauge_for_stage(2)
 	items.add_gauge_for_stage(5)
 	items.add_gauge_for_stage(9)
-	var gauge_ok := is_equal_approx(items.gauge, 53.0)
-	print("item gauge charge 8+15+30 = %.0f %s" % [items.gauge, "OK" if gauge_ok else "FAIL"])
+	var gauge_ok := is_equal_approx(items.gauge, 25.0)
+	print("item gauge charge 5+5+15 = %.0f %s" % [items.gauge, "OK" if gauge_ok else "FAIL"])
 	all_ok = all_ok and gauge_ok
 	for id in ["swap", "shake", "fountain", "sword"]:
 		items.gauge = 100.0

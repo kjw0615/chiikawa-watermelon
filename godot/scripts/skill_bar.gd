@@ -173,8 +173,3 @@ func _draw() -> void:
 		var full := _fill >= 1.0
 		var fb := _box(UIPalette.CELL_FINAL_BG if full else UIPalette.GAUGE_FILL, UIPalette.GAUGE_FULL_BORDER if full else UIPalette.GAUGE_FILL, 10)
 		draw_style_box(fb, Rect2(2, 2, fw, GAUGE_H - 4))
-	# 비용 눈금선
-	for it in ItemDefs.items():
-		var x := size.x * float(it["cost"]) / ItemDefs.gauge_max()
-		if x < size.x - 2.0:
-			draw_line(Vector2(x, 3), Vector2(x, GAUGE_H - 3), Color(UIPalette.TEXT, 0.45), 1.5)
