@@ -186,7 +186,7 @@ func _fountain() -> void:
 	if _water == null:
 		_water = FountainFx.new()
 		_water.z_index = 24
-		_water.column_height = main.FLOOR_Y - 8.0 - FOUNTAIN_CEIL_Y
+		_water.fx_scale = (main.FLOOR_Y - 8.0 - FOUNTAIN_CEIL_Y) / 260.0   # 물보라 꼭대기가 FOUNTAIN_CEIL_Y 부근
 		main.add_child(_water)
 	_water.position = _particles.position
 	_set_fountain_emitting(true)
