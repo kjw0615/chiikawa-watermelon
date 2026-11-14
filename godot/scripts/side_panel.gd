@@ -1,6 +1,8 @@
 class_name SidePanel
 extends Control
-## 오른쪽 UI: 점수 + NEXT(다음 노드) + 합쳐지는 노드 순서(1~11단계 진화표, 2줄 미니 원형 아이콘).
+## 오른쪽 UI: 점수/BEST + NEXT(다음 노드) + 합쳐지는 노드 순서(1~11단계 진화표, 2줄 미니 원형 아이콘).
+
+signal help_pressed
 
 const COLS := 6
 const CELL := 40.0
@@ -9,6 +11,7 @@ var _next_icon: TextureRect
 var _next_name: Label
 var _next_stage_label: Label
 var _score_label: Label
+var _best_label: Label
 
 func _ready() -> void:
 	var bg := Panel.new()
@@ -16,13 +19,35 @@ func _ready() -> void:
 	bg.add_theme_stylebox_override("panel", _box(UIPalette.CREAM, UIPalette.BORDER, 14))
 	add_child(bg)
 
-	# 점수(최고점수는 표기하지 않음)
-	_add_title("SCORE", Vector2(0, 10), 14).add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
+	# 점수(왼쪽) + BEST(오른쪽) + 게임 설명(?) 버튼
+	var score_w := size.x * 0.56
+	var st := _add_title("SCORE", Vector2(0, 10), 14)
+	st.size.x = score_w
+	st.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
 	_score_label = _label(Vector2(0, 28), 36)
-	_score_label.size = Vector2(size.x, 46)
+	_score_label.size = Vector2(score_w, 46)
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_score_label.add_theme_color_override("font_color", UIPalette.SCORE)
 	add_child(_score_label)
+	var bt := _add_title("BEST", Vector2(score_w, 10), 14)
+	bt.size.x = size.x - score_w - 34.0
+	bt.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
+	_best_label = _label(Vector2(score_w, 34), 20)
+	_best_label.size = Vector2(size.x - score_w - 34.0, 34)
+	_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_best_label.add_theme_color_override("font_color", UIPalette.BLUE_INK)
+	add_child(_best_label)
+	var help := Button.new()
+	help.text = "?"
+	help.position = Vector2(size.x - 34.0, 8.0)
+	help.size = Vector2(26, 26)
+	help.focus_mode = Control.FOCUS_NONE
+	help.tooltip_text = "게임 설명"
+	help.add_theme_font_override("font", UIPalette.button_font())
+	help.add_theme_font_size_override("font_size", 16)
+	UIPalette.style_button(help, [UIPalette.NEXT_BG, UIPalette.PAPER, UIPalette.DIVIDER], 13)
+	help.pressed.connect(func(): help_pressed.emit())
+	add_child(help)
 	_divider(86.0)
 
 	_add_title("NEXT", Vector2(0, 96), 16).add_theme_color_override("font_color", UIPalette.BLUE_INK)
@@ -78,6 +103,10 @@ func _ready() -> void:
 
 func set_score(v: int) -> void:
 	_score_label.text = str(v)
+
+func set_best(v: int) -> void:
+	_best_label.text = str(v)
+	_best_label.add_theme_font_size_override("font_size", 20 if _best_label.text.length() <= 6 else 15)   # 자릿수가 많으면 줄여서 칸 안에
 
 func set_next(stage: int) -> void:
 	_next_icon.texture = HeadShapes.get_data(stage)["tex"]

@@ -62,9 +62,14 @@ var merges := 0
 var pops: Array = []
 var _over_modal: Panel
 var _over_score: Label
+var _over_note: Label   # 게임오버 모달의 랭킹/신기록 안내 한 줄
 var _dragging := false
 var _drag_x := 0.0
 var _pause_menu: PauseMenu
+var _auth_modal: AuthModal
+var _rank_modal: RankModal
+var _help_modal: HelpModal
+var _record_note := ""   # 게임오버 모달에 붙는 신기록/제출 결과 문구
 var _over_restart: Button
 var _over_quit: Button
 var _panel: SidePanel
@@ -139,15 +144,22 @@ func _ready() -> void:
 	_build_credit()
 	_pause_menu = PauseMenu.new()
 	add_child(_pause_menu)
+	_pause_menu.home_requested.connect(_go_title)
+	_auth_modal = AuthModal.new()
+	_rank_modal = RankModal.new()
+	_help_modal = HelpModal.new()
+	for m: UiModal in [_auth_modal, _rank_modal, _help_modal]:
+		add_child(m)
+		m.closed.connect(_sync_title_block)
+	_panel.help_pressed.connect(_open_help)
+	Supabase.auth_changed.connect(_update_hud)
 	_new_game()
 	if _auto and not title_test and not text_audit:
 		_set_state(State.PLAYING)   # 자체 테스트는 타이틀을 건너뜀
 	else:
-		_title = TitleScreen.new()
-		_title.size = Vector2(800, 800)
-		add_child(_title)
-		_title.start_pressed.connect(_start_game)
+		_make_title()
 		_set_state(State.TITLE)
+		Supabase.auto_login()   # 저장된 토큰이 있으면 조용히 자동 로그인(실패해도 게임은 그대로)
 	if text_audit:
 		_run_text_audit()
 	elif title_test:
@@ -182,6 +194,35 @@ func _set_state(st: State) -> void:
 		_over_modal.visible = false
 	_preview.visible = false
 
+func _make_title() -> void:
+	_title = TitleScreen.new()
+	_title.size = Vector2(800, 800)
+	add_child(_title)
+	_title.start_pressed.connect(_start_game)
+	_title.rank_pressed.connect(func(): _rank_modal.open(); _sync_title_block())
+	_title.login_pressed.connect(func(): _auth_modal.open(); _sync_title_block())
+	_title.logout_pressed.connect(func(): Supabase.sign_out())
+
+func _sync_title_block() -> void:
+	if _title != null:
+		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open()
+
+## 게임 중/게임오버/일시정지에서 메인(타이틀) 화면으로 복귀
+func _go_title() -> void:
+	if _pause_menu.is_open():
+		_pause_menu.resume()
+	get_tree().paused = false
+	_dragging = false
+	items.cancel_aim(false)
+	_set_state(State.TITLE)
+	_new_game()
+	if _title == null:
+		_make_title()
+
+func _open_help() -> void:
+	if state == State.PLAYING and not over and not items.aiming and not _pause_menu.is_open():
+		_help_modal.open()
+
 func _start_game() -> void:
 	if state != State.TITLE:
 		return
@@ -202,6 +243,7 @@ func _new_game() -> void:
 	merges = 0
 	items.reset()
 	_over_modal.visible = false
+	_over_note.text = ""
 	_roll_next()
 	_update_hud()
 
@@ -456,11 +498,13 @@ func _build_over_modal() -> void:
 	_over_score.add_theme_font_size_override("font_size", 24)
 	_over_score.add_theme_color_override("font_color", UIPalette.TEXT)
 	_over_modal.add_child(_over_score)
+	_over_note = UiModal.make_label("", Vector2(8, 102), Vector2(284, 22), 13, UIPalette.BLUE_INK, true)
+	_over_modal.add_child(_over_note)
 	_over_restart = _modal_button("다시하기", Vector2(24, 130), [UIPalette.PINK, UIPalette.PINK_HOVER, UIPalette.PINK_PRESSED])
 	_over_restart.pressed.connect(_new_game)
 	_over_modal.add_child(_over_restart)
-	_over_quit = _modal_button("종료하기", Vector2(158, 130), UIPalette.QUIT_BG)
-	_over_quit.pressed.connect(func(): get_tree().quit())
+	_over_quit = _modal_button("메인으로", Vector2(158, 130), UIPalette.QUIT_BG)
+	_over_quit.pressed.connect(_go_title)
 	_over_modal.add_child(_over_quit)
 
 func _modal_button(text: String, pos: Vector2, states: Array) -> Button:
@@ -625,6 +669,7 @@ func _physics_process(dt: float) -> void:
 			over = true
 			_over_score.text = "점수 %d" % score
 			_over_modal.visible = true
+			_on_game_over()
 			break
 
 func _process(dt: float) -> void:
@@ -641,6 +686,24 @@ func _process(dt: float) -> void:
 
 func _update_hud() -> void:
 	_panel.set_score(score)
+	# BEST: 로그인하면 서버 최고점, 아니면 로컬 최고점(지금 점수가 더 높으면 실시간으로 올라간다)
+	_panel.set_best(maxi(Supabase.server_best if Supabase.signed_in else best, score))
+
+## 게임오버: 로컬 최고점 저장은 기존 로직이 하고, 여기서는 로그인 상태면 서버에 제출(신기록일 때만 반영됨)
+func _on_game_over() -> void:
+	_over_note.text = ""
+	if not Supabase.signed_in:
+		_over_note.text = "로그인하면 랭킹에 올라가요" if Supabase.enabled else ""
+		return
+	var final := score
+	var r: Dictionary = await Supabase.record_score(final)
+	if not over or score != final:
+		return   # 그 사이에 다시 시작했으면 문구를 덮어쓰지 않음
+	if r["ok"]:
+		_over_note.text = "신기록! 랭킹에 반영됐어요" if final >= Supabase.server_best else "내 최고 기록 %d" % Supabase.server_best
+	else:
+		_over_note.text = "랭킹 전송에 실패했어요"
+	_update_hud()
 
 ## --shot: 자동 드롭 시뮬레이션 후 스크린샷/통계 출력
 func _run_auto() -> void:
@@ -885,6 +948,37 @@ func _run_title_test() -> void:
 	var drop_ok := get_tree().get_nodes_in_group("heads").size() == 1
 	print("drop after start: heads=%d %s" % [get_tree().get_nodes_in_group("heads").size(), "OK" if drop_ok else "FAIL"])
 	ok = ok and drop_ok
+	# 메인 복귀: 게임오버 모달의 '메인으로' / 일시정지의 '메인으로' -> 타이틀 상태, 다시 시작 가능
+	_over_modal.visible = true
+	_over_quit.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	var home_ok := state == State.TITLE and _title != null and not _panel.visible and not _over_modal.visible and not get_tree().paused
+	_title.start_button.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	_pause_menu.open()
+	_pause_menu.quit_button.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	home_ok = home_ok and state == State.TITLE and _title != null and not _pause_menu.is_open() and not get_tree().paused
+	print("back to title (over modal, pause menu): %s" % ["OK" if home_ok else "FAIL"])
+	ok = ok and home_ok
+	# 로그인/회원가입 모달: 잘못된 입력은 서버 호출 없이 한국어 안내, 랭킹은 오프라인 안내
+	_auth_modal.open()
+	_auth_modal._set_mode(true)
+	(_auth_modal._fields["nick"]["edit"] as LineEdit).text = "a"
+	await _auth_modal._on_submit()
+	var msg1: String = _auth_modal._msg.text
+	(_auth_modal._fields["nick"]["edit"] as LineEdit).text = "치이카와"
+	(_auth_modal._fields["email"]["edit"] as LineEdit).text = "bad"
+	await _auth_modal._on_submit()
+	var msg2: String = _auth_modal._msg.text
+	var auth_ok := msg1.contains("2~12자") and msg2.contains("이메일 형식")
+	_auth_modal.close()
+	_rank_modal.open()
+	await get_tree().create_timer(0.2).timeout
+	var rank_ok := _rank_modal.is_open() and _rank_modal._status.text.contains("온라인")
+	_rank_modal.close()
+	print("auth modal validation msgs: '%s' / '%s' %s ; rank offline msg '%s' %s" % [msg1, msg2, "OK" if auth_ok else "FAIL", _rank_modal._status.text, "OK" if rank_ok else "FAIL"])
+	ok = ok and auth_ok and rank_ok
 	print("TITLE TEST ", "PASS" if ok else "FAIL")
 	get_tree().quit()
 
@@ -918,7 +1012,16 @@ func _run_text_audit() -> void:
 	_over_score.text = "점수 1234567"
 	for id in _skill_bar._parts:
 		_skill_bar._parts[id]["cost"].text = "조준 중"   # 가장 긴 비용 칸 문구(조준 모드)
-	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu]:
+	_over_note.text = "로그인하면 랭킹에 올라가요"
+	_panel.set_score(9999999)
+	_panel.set_best(9999999)
+	var sample: Array = []
+	for i in 10:
+		sample.append({"rank": i + 1, "nickname": "열두글자열두글자열두글자", "best_score": 99999999})
+	_rank_modal._show_rows(sample)
+	_rank_modal._mine.text = "열두글자열두글자열두글자님의 최고점: 99999999"
+	_auth_modal._set_mode(true)
+	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]
 	print("TEXT AUDIT checked=%d overflow=%d %s" % [n, bad, "PASS" if bad == 0 else "FAIL"])

@@ -7,6 +7,8 @@ var _root: Control
 var resume_button: Button
 var quit_button: Button
 
+signal home_requested   # 메인(타이틀) 화면으로 돌아가기
+
 func _ready() -> void:
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -45,8 +47,8 @@ func _ready() -> void:
 	resume_button = _button("계속하기", Vector2(60, 92), [UIPalette.PINK, UIPalette.PINK_HOVER, UIPalette.PINK_PRESSED])
 	resume_button.pressed.connect(resume)
 	box.add_child(resume_button)
-	quit_button = _button("종료하기", Vector2(60, 160), UIPalette.QUIT_BG)
-	quit_button.pressed.connect(func(): get_tree().quit())
+	quit_button = _button("메인으로", Vector2(60, 160), UIPalette.QUIT_BG)
+	quit_button.pressed.connect(func(): home_requested.emit())
 	box.add_child(quit_button)
 
 func is_open() -> bool:

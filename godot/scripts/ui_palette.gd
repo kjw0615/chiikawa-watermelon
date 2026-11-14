@@ -55,6 +55,8 @@ const SLIDER_GRABBER_HOVER := Color("59443B")
 const QUIT_BG := [Color("FFFDF7"), Color("FBE3E8"), Color("F8CCD5")]
 
 ## 둥근 버튼 공통 스타일: states = [기본, 호버, 클릭] 배경색. 테두리 #8C6557, 글자 #59443B(외곽선 없음), 그림자 #59443B 14%
+const PINK_STATES := [PINK, PINK_HOVER, PINK_PRESSED]
+
 static func style_button(b: Button, states: Array, radius := 27) -> void:
 	for c in ["font_color", "font_hover_color", "font_pressed_color"]:
 		b.add_theme_color_override(c, TEXT)

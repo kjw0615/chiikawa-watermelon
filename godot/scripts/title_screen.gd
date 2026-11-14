@@ -3,6 +3,9 @@ extends Control
 ## 타이틀 화면: 제목 + 게임 시작 버튼 + 비영리 팬 메이드 면책 문구. 시작하면 start_pressed 를 낸다.
 
 signal start_pressed
+signal rank_pressed
+signal login_pressed
+signal logout_pressed
 
 const TITLE_KO := "먼작귀 데굴데굴 섬"
 const TITLE_EN := "Chiikawa Tumble Island"
@@ -10,7 +13,11 @@ const DISCLAIMER_KO := "본 게임은 공식이 아닌 비영리 팬 메이드 �
 const DISCLAIMER_EN := "This is a non-commercial fan-made game. All rights to Chiikawa belong to Nagano / Chiikawa Committee."
 
 var start_button: Button
+var rank_button: Button
+var account_button: Button   # 로그인/회원가입 <-> 로그아웃
+var _account_label: Label
 var _mascots: Array[Sprite2D] = []
+var blocked := false   # 모달이 열려 있으면 Enter/Space 로 시작하지 않는다
 var _t := 0.0
 
 func _ready() -> void:
@@ -67,6 +74,18 @@ func _ready() -> void:
 	add_child(start_button)
 	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, UIPalette.TEXT_MUTED, 0))
 
+	# 랭킹 / 계정(로그인·로그아웃) 버튼 줄
+	_account_label = _text("", Vector2(0, 552), Vector2(size.x, 24), 16, UIPalette.BLUE_INK, 0)
+	add_child(_account_label)
+	rank_button = _small_button("랭킹", Vector2(size.x / 2.0 - 160.0, 584), UIPalette.ITEM_BG["fountain"])
+	rank_button.pressed.connect(func(): rank_pressed.emit())
+	add_child(rank_button)
+	account_button = _small_button("로그인 / 회원가입", Vector2(size.x / 2.0 + 10.0, 584), [UIPalette.PAPER, UIPalette.CREAM, UIPalette.DIVIDER])
+	account_button.pressed.connect(func(): logout_pressed.emit() if Supabase.signed_in else login_pressed.emit())
+	add_child(account_button)
+	Supabase.auth_changed.connect(_refresh_account)
+	_refresh_account()
+
 	# 하단 면책 문구(공식 오인 방지)
 	var bar := Panel.new()
 	bar.position = Vector2(20, 668)
@@ -116,6 +135,28 @@ func _add_title() -> void:
 	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(sub)
 
+func _refresh_account() -> void:
+	if Supabase.signed_in:
+		_account_label.text = "%s님, 환영해요!" % Supabase.nickname
+		account_button.text = "로그아웃"
+	else:
+		_account_label.text = ""
+		account_button.text = "로그인 / 회원가입"
+
+func _small_button(t: String, pos: Vector2, states: Array) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.position = pos
+	b.size = Vector2(150, 44)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", UIPalette.button_font())
+	b.add_theme_font_size_override("font_size", 18)
+	b.add_theme_color_override("font_color", UIPalette.TEXT)
+	b.add_theme_color_override("font_hover_color", UIPalette.TEXT)
+	b.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
+	UIPalette.style_button(b, states)
+	return b
+
 func _process(dt: float) -> void:
 	_t += dt
 	for i in _mascots.size():
@@ -124,6 +165,8 @@ func _process(dt: float) -> void:
 		sp.rotation = sin(_t * 1.6 + i) * 0.06
 
 func _unhandled_input(e: InputEvent) -> void:
+	if not visible or blocked:
+		return
 	if e is InputEventKey and e.pressed and not e.echo and (e.keycode == KEY_ENTER or e.keycode == KEY_KP_ENTER or e.keycode == KEY_SPACE):
 		get_viewport().set_input_as_handled()
 		start_pressed.emit()
