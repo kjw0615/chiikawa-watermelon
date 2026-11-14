@@ -33,10 +33,10 @@ func _ready() -> void:
 	add_child(help)
 	var col_w := size.x / 2.0
 	for k in 2:
-		var t := _add_title("SCORE" if k == 0 else "BEST", Vector2(col_w * k, 36), 14)
+		var t := _add_title("SCORE" if k == 0 else "BEST", Vector2(col_w * k, 48), 14)
 		t.size.x = col_w
 		t.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
-		var v := _label(Vector2(col_w * k, 52), SCORE_FS)
+		var v := _label(Vector2(col_w * k, 64), SCORE_FS)
 		v.size = Vector2(col_w, 46)
 		v.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_theme_color_override("font_color", UIPalette.SCORE)
@@ -45,37 +45,37 @@ func _ready() -> void:
 			_score_label = v
 		else:
 			_best_label = v
-	_divider(112.0)
+	_divider(124.0)
 
-	_add_title("NEXT", Vector2(0, 122), 16).add_theme_color_override("font_color", UIPalette.BLUE_INK)
+	_add_title("NEXT", Vector2(0, 134), 16).add_theme_color_override("font_color", UIPalette.BLUE_INK)
 	var next_box := Panel.new()
-	next_box.position = Vector2((size.x - 84.0) / 2.0, 148)
+	next_box.position = Vector2((size.x - 84.0) / 2.0, 160)
 	next_box.size = Vector2(84, 84)
 	next_box.add_theme_stylebox_override("panel", _box(UIPalette.NEXT_BG, UIPalette.NEXT_BORDER, 12))
 	add_child(next_box)
 	_next_icon = _icon_rect(Vector2(6, 6), Vector2(72, 72))
 	next_box.add_child(_next_icon)
-	_next_stage_label = _label(Vector2(0, 236), 14)
+	_next_stage_label = _label(Vector2(0, 248), 14)
 	_next_stage_label.size = Vector2(size.x, 20)
 	_next_stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_next_stage_label)
-	_next_name = _label(Vector2(0, 256), 13)
+	_next_name = _label(Vector2(0, 268), 13)
 	_next_name.size = Vector2(size.x, 20)
 	_next_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_next_name)
-	_divider(288.0)
+	_divider(300.0)
 
 	var card := Panel.new()   # 진화표 카드
-	card.position = Vector2(10, 292)
+	card.position = Vector2(10, 304)
 	card.size = Vector2(size.x - 20.0, 158)
 	card.add_theme_stylebox_override("panel", _box(UIPalette.PAPER, UIPalette.BORDER, 12))
 	add_child(card)
-	_add_title("합쳐지는 순서", Vector2(0, 298), 16)
+	_add_title("합쳐지는 순서", Vector2(0, 310), 16)
 	var x0 := (size.x - COLS * CELL) / 2.0
 	for i in NodeDefs.count():
 		var droppable := i <= NodeDefs.drop_max_index()
 		var cell := Panel.new()
-		cell.position = Vector2(x0 + (i % COLS) * CELL + 1, 328 + (i / COLS) * 60.0)
+		cell.position = Vector2(x0 + (i % COLS) * CELL + 1, 340 + (i / COLS) * 60.0)
 		cell.size = Vector2(CELL - 2.0, CELL - 2.0)
 		cell.tooltip_text = "%d. %s" % [i + 1, NodeDefs.node_name(i)]
 		var final := i == NodeDefs.count() - 1
@@ -86,12 +86,12 @@ func _ready() -> void:
 		var icon := _icon_rect(Vector2(4, 4), cell.size - Vector2(8, 8))
 		icon.texture = HeadShapes.get_data(i)["tex"]
 		cell.add_child(icon)
-		var num := _label(Vector2(x0 + (i % COLS) * CELL, 328 + (i / COLS) * 60.0 + CELL - 3.0), 11)
+		var num := _label(Vector2(x0 + (i % COLS) * CELL, 340 + (i / COLS) * 60.0 + CELL - 3.0), 11)
 		num.size = Vector2(CELL, 16)
 		num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		num.text = str(i + 1)   # 별/이모지 글리프 없이 숫자만
 		add_child(num)
-	var note := _label(Vector2(14, 458), 12)
+	var note := _label(Vector2(14, 470), 12)
 	note.size = Vector2(size.x - 28, 56)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)

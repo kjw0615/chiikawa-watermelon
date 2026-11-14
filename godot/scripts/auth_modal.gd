@@ -78,17 +78,21 @@ func _add_field(key: String, caption: String, secret: bool) -> void:
 		eye = _make_eye(e)
 	_fields[key] = {"cap": cap, "edit": e, "eye": eye}
 
-## 비밀번호 칸에는 ASCII 인쇄 문자(영문/숫자/특수문자)만 남기고 나머지(한글, 공백 등)는 바로 지운다
+## 비밀번호 칸: 한글을 치면 두벌식 영문으로 자동 변환하고, ASCII 인쇄 문자(영문/숫자/특수문자) 외(공백 등)는 지운다
 func _filter_password(e: LineEdit, t: String) -> void:
-	var clean := ""
+	var clean := _ascii_only(HangulKeys.to_qwerty(t))   # 한글은 두벌식 영문 키로 바꾼 뒤, 남은 비ASCII/공백은 제거
+	if clean != t:
+		var col := _ascii_only(HangulKeys.to_qwerty(t.substr(0, e.caret_column))).length()
+		e.text = clean
+		e.caret_column = clampi(col, 0, clean.length())
+
+static func _ascii_only(t: String) -> String:
+	var out := ""
 	for ch in t:
 		var c := ch.unicode_at(0)
 		if c >= 0x21 and c <= 0x7E:
-			clean += ch
-	if clean != t:
-		var col := e.caret_column - (t.length() - clean.length())
-		e.text = clean
-		e.caret_column = clampi(col, 0, clean.length())
+			out += ch
+	return out
 
 ## 눈동자 버튼: 누르면 비밀번호 보기/숨기기(secret 토글). 숨김 상태는 눈에 사선
 func _make_eye(e: LineEdit) -> Button:
@@ -138,7 +142,8 @@ func _set_mode(is_signup: bool) -> void:
 		(f["cap"] as Label).visible = on
 		(f["edit"] as LineEdit).visible = on
 		if f["eye"] != null:
-			(f["eye"] as Button).visible = on
+			(f["eye"] as Button).visible = on and is_signup   # 눈동자 버튼은 회원가입에서만
+			(f["edit"] as LineEdit).size.x = box_size.x - 80.0 - (42.0 if is_signup else 0.0)
 		if on:
 			(f["cap"] as Label).position.y = y
 			(f["edit"] as LineEdit).position = Vector2(40, y + 22.0)

@@ -73,6 +73,7 @@ var _help_modal: HelpModal
 var _settings_modal: SettingsModal
 var _confirm_modal: StartConfirmModal
 var _reset_modal: ResetModal
+var _leave_modal: LeaveConfirmModal
 var _record_note := ""   # 게임오버 모달에 붙는 신기록/제출 결과 문구
 var _over_restart: Button
 var _over_quit: Button
@@ -81,6 +82,8 @@ var _preview: Sprite2D
 var _players: Array[AudioStreamPlayer] = []
 var _sfx_i := 0
 var _synth := {}   # 코드로 합성한 효과음(음식 분수)
+var _item_players := {}   # 아이템 효과음 전용 재생기(충돌음이 돌려쓰는 풀에 덮어씌워지지 않게 분리)
+const COLLISION_VOL := 0.65   # 충돌(contact/land) 효과음 기본 볼륨 배율
 var _auto := false
 var _sep_t := 0.0
 var separations := 0
@@ -136,18 +139,20 @@ func _ready() -> void:
 	_build_credit()
 	_pause_menu = PauseMenu.new()
 	add_child(_pause_menu)
-	_pause_menu.home_requested.connect(_go_title)
+	_pause_menu.home_requested.connect(_on_pause_home)
 	_settings_modal = SettingsModal.new()
 	_auth_modal = AuthModal.new()
 	_reset_modal = ResetModal.new()   # 로그인 팝업 위에 열린다
 	_rank_modal = RankModal.new()
 	_confirm_modal = StartConfirmModal.new()
+	_leave_modal = LeaveConfirmModal.new()
 	_help_modal = HelpModal.new()   # 마지막에 만들어 다른 모달 위에 겹쳐 열린다
-	for m: UiModal in [_settings_modal, _auth_modal, _reset_modal, _rank_modal, _confirm_modal, _help_modal]:
+	for m: UiModal in [_settings_modal, _auth_modal, _reset_modal, _rank_modal, _confirm_modal, _leave_modal, _help_modal]:
 		add_child(m)
 		m.closed.connect(_sync_title_block)
 	_auth_modal.forgot_requested.connect(func(): _reset_modal.open(); _sync_title_block())
 	_settings_modal.help_requested.connect(func(): _help_modal.open())
+	_leave_modal.confirmed.connect(_go_title)
 	_confirm_modal.start_chosen.connect(_start_game)
 	_confirm_modal.login_chosen.connect(func(): _auth_modal.open(); _sync_title_block())
 	_panel.help_pressed.connect(_open_help)
@@ -230,6 +235,13 @@ func _on_start_pressed() -> void:
 	else:
 		_confirm_modal.open()   # 비로그인: 기록이 저장되지 않는다는 안내 팝업
 		_sync_title_block()
+
+## 일시정지 메뉴의 '메인으로': 로그인 상태면 이번 기록이 저장되지 않는다는 확인 팝업, 비로그인은 바로 복귀
+func _on_pause_home() -> void:
+	if Supabase.signed_in:
+		_leave_modal.open()
+	else:
+		_go_title()
 
 func _open_help() -> void:
 	if state == State.PLAYING and not over and not items.aiming and not _pause_menu.is_open():
@@ -423,11 +435,11 @@ func _on_touched(a: Head, b: Node, speed: float) -> void:
 			else:
 				_merge.call_deferred(b, a)
 		elif speed > 120.0:
-			_play("contact", clampf(speed / 600.0, 0.15, 1.0))
+			_play("contact", clampf(speed / 600.0, 0.15, 1.0) * COLLISION_VOL)
 			if speed > 300.0:
 				a.squash()
 	elif speed > 220.0:
-		_play("land", clampf(speed / 700.0, 0.3, 1.0))
+		_play("land", clampf(speed / 700.0, 0.3, 1.0) * COLLISION_VOL)
 		a.squash()
 
 func _merge(a: Head, b: Head) -> void:
@@ -544,7 +556,16 @@ func _separate_overlaps() -> void:
 
 ## 아이템 효과음: 모두 SFX 버스(_players)로 재생
 func play_item_sound(id: String) -> void:
-	_play("item_" + id if SFX.has("item_" + id) else id, 1.0)
+	var key := "item_" + id if SFX.has("item_" + id) else id
+	var p: AudioStreamPlayer = _item_players.get(id)
+	if p == null:
+		p = AudioStreamPlayer.new()
+		p.bus = Audio.BUS_SFX
+		p.volume_db = 3.0   # 충돌음보다 또렷하게
+		add_child(p)
+		_item_players[id] = p
+	p.stream = SFX[key] if SFX.has(key) else _synth[key]
+	p.play()   # 충돌음이 쏟아져도 이 재생기는 건드리지 않는다
 
 func _play(name: String, vol: float) -> void:
 	var p := _players[_sfx_i]
@@ -912,7 +933,11 @@ func _run_title_test() -> void:
 	snd_ok = snd_ok and (_synth["fountain"] as AudioStreamWAV).get_length() > 2.8 and (_synth["fountain"] as AudioStreamWAV).data.size() > 100000
 	for id in ["shake", "swap", "sword", "fountain"]:
 		play_item_sound(id)
-		snd_ok = snd_ok and _players[(_sfx_i + _players.size() - 1) % _players.size()].stream != null and _players[(_sfx_i + _players.size() - 1) % _players.size()].bus == "SFX"
+		snd_ok = snd_ok and _item_players[id].stream != null and _item_players[id].bus == "SFX" and _item_players[id].volume_db >= 0.0
+	# 충돌음이 쏟아져도 아이템 소리가 덮어씌워지지 않는지: 풀을 한 바퀴 이상 돌린 뒤에도 아이템 재생기 스트림 유지
+	for i in 20:
+		_play("contact", 0.5)
+	snd_ok = snd_ok and _item_players["shake"].stream == SFX["item_shake"] and not _players.has(_item_players["shake"]) and COLLISION_VOL < 1.0 and COLLISION_VOL >= 0.6
 	score = 500
 	_update_hud()
 	var guest_best: String = _panel._best_label.text
@@ -947,7 +972,34 @@ func _run_title_test() -> void:
 	eye.pressed.emit()
 	var shown := not pw_edit.secret
 	eye.pressed.emit()
-	var pw_ok := pw_edit.text == "ab12!" and was_secret and shown and pw_edit.secret and pw_edit.secret_character == "*" and AuthValidator.password_error("abc한글1234") != ""
+	var pw_ok := pw_edit.text == "abgksrmf12!" and HangulKeys.to_qwerty("한글") == "gksrmf" and HangulKeys.to_qwerty("ㅁㅠ") == "ab" and HangulKeys.to_qwerty("비밀번호1") == "qlalfqjsgh1" and HangulKeys.to_qwerty("값읽") == "rkqtdlfr" and was_secret and shown and pw_edit.secret and pw_edit.secret_character == "*" and AuthValidator.password_error("abc한글1234") != ""
+	_auth_modal._set_mode(false)
+	var eye_login_hidden := not eye.visible
+	_auth_modal._set_mode(true)
+	var eye_signup_shown := eye.visible and (_auth_modal._fields["pw2"]["eye"] as Button).visible
+	_auth_modal._set_mode(false)
+	pw_ok = pw_ok and eye_login_hidden and eye_signup_shown
+	# 로그인 상태의 '메인으로': 확인 팝업(취소는 그대로, 확인은 복귀), 비로그인은 바로 복귀
+	_start_game()
+	_pause_menu.open()
+	Supabase.signed_in = true
+	_pause_menu.quit_button.pressed.emit()
+	var l1 := _leave_modal.is_open() and state == State.PLAYING
+	_leave_modal.cancel_button.pressed.emit()
+	var l2 := not _leave_modal.is_open() and state == State.PLAYING and _pause_menu.is_open()
+	_pause_menu.quit_button.pressed.emit()
+	_leave_modal.confirm_button.pressed.emit()
+	var l3 := state == State.TITLE and not get_tree().paused and not _pause_menu.is_open()
+	_start_game()
+	_pause_menu.open()
+	Supabase.signed_in = false
+	_pause_menu.quit_button.pressed.emit()
+	var l4 := state == State.TITLE and not _leave_modal.is_open()
+	var leave_ok := l1 and l2 and l3 and l4
+	print("leave confirm (signed-in popup %s, cancel %s, confirm %s, guest direct %s) %s" % [l1, l2, l3, l4, "OK" if leave_ok else "FAIL"])
+	if state != State.TITLE:
+		_go_title()
+	pw_ok = pw_ok and leave_ok
 	var ui_ok := snd_ok and best_ok and not star and pw_ok
 	print("item sounds %s ; BEST rules (guest %s, login %s, live %s) %s ; no star/? glyphs %s ; password filter+eye %s" % [snd_ok, guest_best, login_best, live_best, best_ok, not star, pw_ok])
 	ok = ok and ui_ok
@@ -1039,7 +1091,7 @@ func _run_text_audit() -> void:
 	_rank_modal._show_rows(sample)
 	_rank_modal._mine.text = "열두글자열두글자열두글자님의 최고점: 99999999"
 	_auth_modal._set_mode(true)
-	for item in [_panel, _skill_bar, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box]:
+	for item in [_panel, _skill_bar, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box, _leave_modal.box]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]
 	_auth_modal._set_mode(false)   # 로그인 탭(아이디 + 비밀번호 + 비밀번호 찾기)도 점검
