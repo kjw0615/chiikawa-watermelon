@@ -60,14 +60,12 @@ func _ready() -> void:
 	start_button.add_theme_color_override("font_color", UIPalette.TEXT)
 	start_button.add_theme_color_override("font_hover_color", UIPalette.TEXT)
 	start_button.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
-	start_button.add_theme_color_override("font_outline_color", UIPalette.TEXT)
-	start_button.add_theme_constant_override("outline_size", 4)
 	start_button.add_theme_stylebox_override("normal", _btn_box(UIPalette.PINK))
 	start_button.add_theme_stylebox_override("hover", _btn_box(UIPalette.PINK_HOVER))
 	start_button.add_theme_stylebox_override("pressed", _btn_box(UIPalette.PINK_PRESSED))
 	start_button.pressed.connect(func(): start_pressed.emit())
 	add_child(start_button)
-	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, UIPalette.TEXT_MUTED, 4))
+	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, UIPalette.TEXT_MUTED, 0))
 
 	# 하단 면책 문구(공식 오인 방지)
 	var bar := Panel.new()
@@ -82,7 +80,7 @@ func _ready() -> void:
 	bar.add_theme_stylebox_override("panel", sb)
 	add_child(bar)
 	add_child(_text(DISCLAIMER_KO, Vector2(30, 682), Vector2(size.x - 60.0, 28), 17, UIPalette.TEXT_MUTED, 0))
-	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, UIPalette.TEXT_MUTED, 3)
+	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, UIPalette.TEXT_MUTED, 0)
 	en.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(en)
 
