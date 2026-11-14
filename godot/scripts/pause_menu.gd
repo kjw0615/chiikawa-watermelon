@@ -33,6 +33,7 @@ func _ready() -> void:
 	box.add_theme_stylebox_override("panel", sb)
 	_root.add_child(box)
 	var t := Label.new()
+	t.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	t.text = "일시정지 (PAUSE)"
 	t.position = Vector2(0, 26)
 	t.size = Vector2(320, 44)

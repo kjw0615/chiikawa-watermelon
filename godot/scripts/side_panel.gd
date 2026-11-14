@@ -101,6 +101,7 @@ func _add_title(t: String, pos: Vector2, font_size := 16) -> Label:
 
 func _label(pos: Vector2, font_size: int) -> Label:
 	var l := Label.new()
+	l.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	l.position = pos
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", UIPalette.TEXT)

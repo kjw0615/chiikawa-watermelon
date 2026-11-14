@@ -9,7 +9,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [gui]
 
-theme/custom_font="res://assets/fonts/GowunDodum-subset.ttf"
+theme/custom_font="res://assets/fonts/body_font.tres"
 
 [display]
 

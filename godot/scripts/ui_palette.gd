@@ -71,11 +71,11 @@ static func style_button(b: Button, states: Array, radius := 27) -> void:
 		bx.shadow_offset = Vector2(0, 3)
 		b.add_theme_stylebox_override(names[i], bx)
 
-## 제목용 폰트(Jua). Jua에 없는 기호는 본문 폰트(Gowun Dodum)로 대체된다.
+## 제목용 폰트(학교안심 둥근미소). 없는 기호는 본문 폰트로 대체된다.
 static func title_font() -> Font:
 	var f := FontVariation.new()
-	f.base_font = load("res://assets/fonts/Jua-subset.ttf")
-	f.fallbacks = [load("res://assets/fonts/GowunDodum-subset.ttf")]
+	f.base_font = load("res://assets/fonts/HakgyoansimDunggeunmiso-subset.ttf")
+	f.fallbacks = [load("res://assets/fonts/body_font.tres")]
 	return f
 
 static func circle_texture(col: Color, d := 20) -> ImageTexture:

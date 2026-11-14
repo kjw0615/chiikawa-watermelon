@@ -19,6 +19,7 @@ func setup(items: ItemSystem) -> void:
 	_items = items
 	items.changed.connect(refresh)
 	_gauge_label = Label.new()
+	_gauge_label.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	_gauge_label.position = Vector2(0, 2)
 	_gauge_label.size = Vector2(size.x, GAUGE_H - 4)
 	_gauge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -86,15 +87,18 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.add_theme_stylebox_override("panel", _box(UIPalette.TEXT, UIPalette.TEXT, 8))
 	btn.add_child(badge)
-	badge.add_child(_label(str(i + 1), Vector2(0, -1), Vector2(16, 16), 11, UIPalette.PAPER, true))
+	var bn := _label(str(i + 1), Vector2(0, -4), Vector2(16, 24), 11, UIPalette.PAPER, true)
+	bn.vertical_alignment = VERTICAL_ALIGNMENT_CENTER   # 줄 높이(약 24px) 상자를 배지 중앙에 맞춤
+	badge.add_child(bn)
 	return btn
 
 func _label(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, center: bool) -> Label:
 	var l := Label.new()
+	l.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	l.text = t
 	l.position = pos
-	l.size = sz
 	l.add_theme_font_size_override("font_size", font_size)
+	l.size = sz   # 글꼴 크기를 정한 뒤에 크기를 줘야 기본(16px) 높이로 커지지 않는다
 	l.add_theme_color_override("font_color", col)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if center:

@@ -98,7 +98,8 @@ func _ready() -> void:
 	_auto = "--shot" in OS.get_cmdline_user_args()
 	var verify := "--verify" in OS.get_cmdline_user_args()
 	var title_test := "--title-test" in OS.get_cmdline_user_args()
-	_auto = _auto or verify or title_test   # 자체 테스트 모드
+	var text_audit := "--text-audit" in OS.get_cmdline_user_args()
+	_auto = _auto or verify or title_test or text_audit   # 자체 테스트 모드
 	_build_cave()
 	_build_walls()
 	_art_bg = _make_art(BG_ART, -100)
@@ -139,7 +140,7 @@ func _ready() -> void:
 	_pause_menu = PauseMenu.new()
 	add_child(_pause_menu)
 	_new_game()
-	if _auto and not title_test:
+	if _auto and not title_test and not text_audit:
 		_set_state(State.PLAYING)   # 자체 테스트는 타이틀을 건너뜀
 	else:
 		_title = TitleScreen.new()
@@ -147,7 +148,9 @@ func _ready() -> void:
 		add_child(_title)
 		_title.start_pressed.connect(_start_game)
 		_set_state(State.TITLE)
-	if title_test:
+	if text_audit:
+		_run_text_audit()
+	elif title_test:
 		_run_title_test()
 	elif verify:
 		_run_verify()
@@ -156,6 +159,7 @@ func _ready() -> void:
 
 func _build_credit() -> void:
 	_credit = Label.new()
+	_credit.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	_credit.text = TitleScreen.DISCLAIMER_KO + "\n" + TitleScreen.DISCLAIMER_EN
 	_credit.position = Vector2(6, 764)
 	_credit.size = Vector2(468, 34)
@@ -435,6 +439,7 @@ func _build_over_modal() -> void:
 	_over_modal.add_theme_stylebox_override("panel", sb)
 	add_child(_over_modal)
 	var t := Label.new()
+	t.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	t.text = "GAME OVER"
 	t.position = Vector2(0, 20)
 	t.size = Vector2(300, 44)
@@ -444,6 +449,7 @@ func _build_over_modal() -> void:
 	t.add_theme_color_override("font_color", UIPalette.TEXT)
 	_over_modal.add_child(t)
 	_over_score = Label.new()
+	_over_score.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	_over_score.position = Vector2(0, 70)
 	_over_score.size = Vector2(300, 32)
 	_over_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -510,6 +516,7 @@ func _build_audio_ui() -> void:
 	box.add_child(_mute_btn)
 
 	_vol_label = Label.new()
+	_vol_label.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	_vol_label.position = Vector2(196, 20)
 	_vol_label.size = Vector2(60, 22)
 	_vol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -889,3 +896,66 @@ func _unhandled_input_blocked_check() -> void:
 	_unhandled_input(ev)
 	var blocked := get_tree().get_nodes_in_group("heads").size() == 0
 	print("title blocks drop: %s %s" % [blocked, "OK" if blocked else "FAIL"])
+
+## --text-audit: 모든 Label/Button 글자가 자기 칸(크기) 안에 들어가는지 폰트 실측으로 점검(--headless)
+func _run_text_audit() -> void:
+	await get_tree().create_timer(0.3).timeout
+	var bad := 0
+	var n := 0
+	# 1) 타이틀 화면
+	_title = TitleScreen.new()
+	_title.size = Vector2(730, 800)
+	add_child(_title)
+	await get_tree().process_frame
+	var r := _audit_tree(_title)
+	n += r[0]; bad += r[1]
+	_title.queue_free()
+	_title = null
+	# 2) 게임 화면(사이드바/스킬바/볼륨/저작권) + 게임오버 모달 + 일시정지 메뉴
+	_set_state(State.PLAYING)
+	_over_modal.visible = true
+	_over_score.text = "점수 1234567"
+	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu]:
+		r = _audit_tree(item)
+		n += r[0]; bad += r[1]
+	print("TEXT AUDIT checked=%d overflow=%d %s" % [n, bad, "PASS" if bad == 0 else "FAIL"])
+	get_tree().quit()
+
+func _audit_tree(root: Node) -> Array:
+	var checked := 0
+	var bad := 0
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var c: Node = stack.pop_back()
+		stack.append_array(c.get_children())
+		if not (c is Label or c is Button):
+			continue
+		var text: String = c.text
+		if text.strip_edges() == "":
+			continue
+		checked += 1
+		var font: Font = c.get_theme_font("font")
+		var fs: int = c.get_theme_font_size("font_size")
+		var line_h := font.get_height(fs)
+		var avail: Vector2 = c.size
+		if c is Button:
+			avail -= Vector2(12, 4)   # 버튼 안쪽 여백
+		var need: Vector2
+		if c is Label and c.autowrap_mode != TextServer.AUTOWRAP_OFF:
+			need = font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, avail.x, fs, -1, TextServer.BREAK_WORD_BOUND | TextServer.BREAK_MANDATORY | TextServer.BREAK_ADAPTIVE)
+		else:
+			need = font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs)
+		var too_wide := need.x > avail.x + 0.5
+		var too_tall := need.y > avail.y + 1.0 and avail.y > 0.0
+		# Label 은 글자가 넓으면 스스로 커지므로(최소 크기), 부모 칸을 벗어났는지도 함께 본다
+		var par := c.get_parent() as Control
+		var out_of_parent := false
+		if par != null and c is Label:
+			var rc := Rect2(c.position, c.size)
+			out_of_parent = rc.position.x < -0.5 or rc.end.x > par.size.x + 0.5
+			out_of_parent = out_of_parent or c.position.y < -4.0 or c.position.y + minf(need.y, c.size.y) > par.size.y + 1.0   # 세로는 실제 글자 높이 기준
+		if too_wide or too_tall or out_of_parent:
+			bad += 1
+			print("  OVERFLOW %s '%s' font=%d need=%s avail=%s rect=%s parent=%s" % [c.get_path(), text.replace("
+", "/"), fs, need.snapped(Vector2(0.1, 0.1)), avail, Rect2(c.position, c.size), par.size if par != null else Vector2.ZERO])
+	return [checked, bad]

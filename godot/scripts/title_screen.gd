@@ -132,6 +132,7 @@ func _unhandled_input(e: InputEvent) -> void:
 
 func _text(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, outline: int) -> Label:
 	var l := Label.new()
+	l.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	l.text = t
 	l.position = pos
 	l.size = sz
