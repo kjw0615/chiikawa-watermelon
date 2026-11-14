@@ -17,12 +17,23 @@ func _ready() -> void:
 	z_index = 100
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# 동굴 아트가 비쳐 보이는 어두운 막
-	var dim := ColorRect.new()
-	dim.color = Color(0.09, 0.06, 0.2, 0.62)
-	dim.size = size
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
+	# 배경: 상단 하늘색 -> 하단 크림의 완만한 그라데이션(동굴 그림이 12% 정도 비침)
+	var grad := Gradient.new()
+	grad.colors = PackedColorArray([Color(UIPalette.TITLE_BG_TOP, 0.88), Color(UIPalette.TITLE_BG_BOTTOM, 0.88)])
+	grad.offsets = PackedFloat32Array([0.0, 1.0])
+	var gt := GradientTexture2D.new()
+	gt.gradient = grad
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	gt.width = 8
+	gt.height = 256
+	var bg := TextureRect.new()
+	bg.texture = gt
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.size = size
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
 
 	# 제목
 	_add_title()
@@ -45,17 +56,17 @@ func _ready() -> void:
 	start_button.position = Vector2((size.x - 280.0) / 2.0, 430.0)
 	start_button.focus_mode = Control.FOCUS_NONE
 	start_button.add_theme_font_size_override("font_size", 32)
-	start_button.add_theme_color_override("font_color", Color.WHITE)
-	start_button.add_theme_color_override("font_hover_color", Color.WHITE)
-	start_button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	start_button.add_theme_color_override("font_outline_color", UIPalette.ACCENT_TEXT)
+	start_button.add_theme_color_override("font_color", UIPalette.TEXT)
+	start_button.add_theme_color_override("font_hover_color", UIPalette.TEXT)
+	start_button.add_theme_color_override("font_pressed_color", UIPalette.TEXT)
+	start_button.add_theme_color_override("font_outline_color", UIPalette.TEXT)
 	start_button.add_theme_constant_override("outline_size", 4)
-	start_button.add_theme_stylebox_override("normal", _btn_box(UIPalette.ACCENT))
-	start_button.add_theme_stylebox_override("hover", _btn_box(UIPalette.ACCENT_HOVER))
-	start_button.add_theme_stylebox_override("pressed", _btn_box(UIPalette.ACCENT_PRESSED))
+	start_button.add_theme_stylebox_override("normal", _btn_box(UIPalette.PINK))
+	start_button.add_theme_stylebox_override("hover", _btn_box(UIPalette.PINK_HOVER))
+	start_button.add_theme_stylebox_override("pressed", _btn_box(UIPalette.PINK_PRESSED))
 	start_button.pressed.connect(func(): start_pressed.emit())
 	add_child(start_button)
-	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, UIPalette.TEXT_ON_DARK, 4))
+	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, UIPalette.TEXT_MUTED, 4))
 
 	# 하단 면책 문구(공식 오인 방지)
 	var bar := Panel.new()
@@ -63,14 +74,14 @@ func _ready() -> void:
 	bar.size = Vector2(size.x - 40.0, 112)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.03, 0.12, 0.6)
-	sb.border_color = UIPalette.SECONDARY
+	sb.bg_color = UIPalette.PAPER
+	sb.border_color = UIPalette.DIVIDER
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(14)
 	bar.add_theme_stylebox_override("panel", sb)
 	add_child(bar)
-	add_child(_text(DISCLAIMER_KO, Vector2(30, 682), Vector2(size.x - 60.0, 28), 17, Color.WHITE, 3))
-	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, UIPalette.TEXT_ON_DARK, 3)
+	add_child(_text(DISCLAIMER_KO, Vector2(30, 682), Vector2(size.x - 60.0, 28), 17, UIPalette.TEXT_MUTED, 0))
+	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, UIPalette.TEXT_MUTED, 3)
 	en.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(en)
 
@@ -80,13 +91,13 @@ func _add_title() -> void:
 	bold.base_font = load("res://assets/fonts/NotoSansKR-subset.ttf")
 	bold.variation_opentype = {0x77676874: 900}   # "wght" 축 최대 굵기
 	bold.variation_embolden = 0.25
-	var t := _text(TITLE_KO, Vector2(0, 60), Vector2(size.x, 110), 80, UIPalette.CREAM, 16)
+	var t := _text(TITLE_KO, Vector2(0, 60), Vector2(size.x, 110), 80, UIPalette.TITLE_FILL, 6)
 	t.add_theme_font_override("font", bold)
-	t.add_theme_color_override("font_outline_color", UIPalette.TITLE_OUTLINE)
+	t.add_theme_color_override("font_outline_color", UIPalette.TEXT)
 	t.add_theme_color_override("font_shadow_color", UIPalette.TITLE_SHADOW)
 	t.add_theme_constant_override("shadow_offset_x", 0)
-	t.add_theme_constant_override("shadow_offset_y", 8)
-	t.add_theme_constant_override("shadow_outline_size", 16)
+	t.add_theme_constant_override("shadow_offset_y", 3)
+	t.add_theme_constant_override("shadow_outline_size", 6)
 	t.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(t)
 	# 영문 부제 리본
@@ -95,18 +106,17 @@ func _add_title() -> void:
 	ribbon.size = Vector2(420, 46)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UIPalette.RIBBON
-	sb.border_color = UIPalette.CREAM
+	sb.border_color = UIPalette.BORDER
 	sb.set_border_width_all(3)
 	sb.set_corner_radius_all(23)
-	sb.shadow_color = Color(0, 0, 0, 0.3)
+	sb.shadow_color = UIPalette.SHADOW
 	sb.shadow_size = 6
 	sb.shadow_offset = Vector2(0, 3)
 	ribbon.add_theme_stylebox_override("panel", sb)
 	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ribbon)
-	var sub := _text(TITLE_EN, Vector2(0, 182), Vector2(size.x, 38), 26, UIPalette.CREAM_LIGHT, 5)
+	var sub := _text(TITLE_EN, Vector2(0, 182), Vector2(size.x, 38), 26, UIPalette.TEXT, 0)
 	sub.add_theme_font_override("font", bold)
-	sub.add_theme_color_override("font_outline_color", UIPalette.ACCENT_DEEP)
 	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(sub)
 
@@ -130,7 +140,7 @@ func _text(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, out
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", UIPalette.OUTLINE)
+	l.add_theme_color_override("font_outline_color", UIPalette.TEXT)
 	l.add_theme_constant_override("outline_size", outline)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
@@ -138,10 +148,10 @@ func _text(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, out
 func _btn_box(fill: Color) -> StyleBoxFlat:
 	var b := StyleBoxFlat.new()
 	b.bg_color = fill
-	b.border_color = Color.WHITE
-	b.set_border_width_all(4)
+	b.border_color = UIPalette.CONTROL_BORDER
+	b.set_border_width_all(3)
 	b.set_corner_radius_all(38)
-	b.shadow_color = Color(0, 0, 0, 0.35)
+	b.shadow_color = UIPalette.SHADOW
 	b.shadow_size = 8
 	b.shadow_offset = Vector2(0, 4)
 	return b

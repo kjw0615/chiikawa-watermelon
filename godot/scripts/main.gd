@@ -161,8 +161,8 @@ func _build_credit() -> void:
 	_credit.size = Vector2(468, 34)
 	_credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_credit.add_theme_font_size_override("font_size", 9)
-	_credit.add_theme_color_override("font_color", Color("ffffff"))
-	_credit.add_theme_color_override("font_outline_color", UIPalette.OUTLINE)
+	_credit.add_theme_color_override("font_color", UIPalette.CREAM)
+	_credit.add_theme_color_override("font_outline_color", UIPalette.TEXT)
 	_credit.add_theme_constant_override("outline_size", 3)
 	_credit.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_credit.z_index = 45
@@ -426,11 +426,11 @@ func _build_over_modal() -> void:
 	_over_modal.z_index = 60
 	_over_modal.visible = false
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = UIPalette.PANEL
-	sb.border_color = UIPalette.PANEL_BORDER
+	sb.bg_color = UIPalette.CREAM
+	sb.border_color = UIPalette.BORDER
 	sb.set_border_width_all(4)
 	sb.set_corner_radius_all(22)
-	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_color = UIPalette.SHADOW
 	sb.shadow_size = 16
 	_over_modal.add_theme_stylebox_override("panel", sb)
 	add_child(_over_modal)
@@ -440,7 +440,7 @@ func _build_over_modal() -> void:
 	t.size = Vector2(300, 44)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_font_size_override("font_size", 34)
-	t.add_theme_color_override("font_color", UIPalette.ACCENT_TEXT)
+	t.add_theme_color_override("font_color", UIPalette.TEXT)
 	_over_modal.add_child(t)
 	_over_score = Label.new()
 	_over_score.position = Vector2(0, 70)
@@ -449,39 +449,31 @@ func _build_over_modal() -> void:
 	_over_score.add_theme_font_size_override("font_size", 24)
 	_over_score.add_theme_color_override("font_color", UIPalette.TEXT)
 	_over_modal.add_child(_over_score)
-	_over_restart = _modal_button("다시하기", Vector2(24, 130), UIPalette.ACCENT, UIPalette.ACCENT_TEXT)
+	_over_restart = _modal_button("다시하기", Vector2(24, 130), [UIPalette.PINK, UIPalette.PINK_HOVER, UIPalette.PINK_PRESSED])
 	_over_restart.pressed.connect(_new_game)
 	_over_modal.add_child(_over_restart)
-	_over_quit = _modal_button("종료하기", Vector2(158, 130), UIPalette.SECONDARY, UIPalette.SECONDARY_DARK)
+	_over_quit = _modal_button("종료하기", Vector2(158, 130), UIPalette.QUIT_BG)
 	_over_quit.pressed.connect(func(): get_tree().quit())
 	_over_modal.add_child(_over_quit)
 
-func _modal_button(text: String, pos: Vector2, fill: Color, outline: Color) -> Button:
+func _modal_button(text: String, pos: Vector2, states: Array) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.position = pos
 	b.size = Vector2(118, 54)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", 22)
-	for c in ["font_color", "font_hover_color", "font_pressed_color"]:
-		b.add_theme_color_override(c, Color.WHITE)
-	for st in ["normal", "hover", "pressed"]:
-		var bx := StyleBoxFlat.new()
-		bx.bg_color = fill.lightened(0.12) if st == "hover" else (fill.darkened(0.1) if st == "pressed" else fill)
-		bx.border_color = Color.WHITE
-		bx.set_border_width_all(3)
-		bx.set_corner_radius_all(27)
-		b.add_theme_stylebox_override(st, bx)
+	UIPalette.style_button(b, states)
 	return b
 
 ## 스피커 아이콘(음소거면 빨간 X)
 func _draw_speaker() -> void:
-	var col := UIPalette.SECONDARY_DEEP if not _muted else UIPalette.TEXT_DISABLED
+	var col := UIPalette.BLUE_INK if not _muted else UIPalette.TEXT_MUTED
 	_speaker.draw_rect(Rect2(5, 13, 7, 10), col)
 	_speaker.draw_colored_polygon(PackedVector2Array([Vector2(12, 13), Vector2(21, 6), Vector2(21, 30), Vector2(12, 23)]), col)
 	if _muted:
-		_speaker.draw_line(Vector2(25, 12), Vector2(34, 24), UIPalette.MUTE_X, 3.0)
-		_speaker.draw_line(Vector2(34, 12), Vector2(25, 24), UIPalette.MUTE_X, 3.0)
+		_speaker.draw_line(Vector2(25, 12), Vector2(34, 24), UIPalette.TEXT_MUTED, 3.0)
+		_speaker.draw_line(Vector2(34, 12), Vector2(25, 24), UIPalette.TEXT_MUTED, 3.0)
 	else:
 		_speaker.draw_arc(Vector2(21, 18), 7.0, -0.9, 0.9, 10, col, 2.5)
 		_speaker.draw_arc(Vector2(21, 18), 12.0, -0.9, 0.9, 12, col, 2.5)
@@ -492,8 +484,8 @@ func _build_audio_ui() -> void:
 	box.position = Vector2(520, 728)
 	box.size = Vector2(264, 64)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = UIPalette.PANEL
-	sb.border_color = UIPalette.PANEL_BORDER
+	sb.bg_color = UIPalette.CREAM
+	sb.border_color = UIPalette.BORDER
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(12)
 	box.add_theme_stylebox_override("panel", sb)
@@ -536,10 +528,13 @@ func _build_audio_ui() -> void:
 	track.content_margin_top = 4
 	track.content_margin_bottom = 4
 	var fill := StyleBoxFlat.new()
-	fill.bg_color = UIPalette.SECONDARY
+	fill.bg_color = UIPalette.SLIDER_FILL
 	fill.set_corner_radius_all(4)
 	fill.content_margin_top = 4
 	fill.content_margin_bottom = 4
+	_vol_slider.add_theme_icon_override("grabber", UIPalette.circle_texture(UIPalette.BLUE_INK))
+	_vol_slider.add_theme_icon_override("grabber_highlight", UIPalette.circle_texture(UIPalette.SLIDER_GRABBER_HOVER))
+	_vol_slider.add_theme_icon_override("grabber_disabled", UIPalette.circle_texture(UIPalette.TEXT_MUTED))
 	_vol_slider.add_theme_stylebox_override("slider", track)
 	_vol_slider.add_theme_stylebox_override("grabber_area", fill)
 	_vol_slider.add_theme_stylebox_override("grabber_area_highlight", fill)

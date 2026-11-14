@@ -13,6 +13,7 @@ var _items: ItemSystem
 var _fill := 0.0
 var _gauge_label: Label
 var _buttons := {}   # id -> Button
+var _parts := {}     # id -> {name, cost, icon, glyph} 비활성 상태 표시용 자식들
 
 func setup(items: ItemSystem) -> void:
 	_items = items
@@ -22,7 +23,7 @@ func setup(items: ItemSystem) -> void:
 	_gauge_label.size = Vector2(size.x, GAUGE_H - 4)
 	_gauge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_gauge_label.add_theme_font_size_override("font_size", 13)
-	_gauge_label.add_theme_color_override("font_color", UIPalette.TEXT_STRONG)
+	_gauge_label.add_theme_color_override("font_color", UIPalette.TEXT)
 	_gauge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_gauge_label)
 
@@ -43,11 +44,8 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	btn.size = Vector2(_btn_w(), BTN_H)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.tooltip_text = "%s (%d%%)" % [it["full_name"], int(it["cost"])]
-	btn.add_theme_stylebox_override("normal", _box(UIPalette.BTN_BG, UIPalette.BTN_BORDER))
-	btn.add_theme_stylebox_override("hover", _box(UIPalette.PINK_SOFT, UIPalette.BTN_BORDER_HOVER))
-	btn.add_theme_stylebox_override("pressed", _box(UIPalette.BTN_BG_PRESSED, UIPalette.BTN_BORDER_PRESSED))
-	btn.add_theme_stylebox_override("disabled", _box(UIPalette.BTN_DISABLED_BG, UIPalette.BTN_DISABLED_BORDER))
 	var id: String = it["id"]
+	_apply_styles(btn, id, false)
 	btn.pressed.connect(func(): use_requested.emit(id))
 
 	# 아이콘 자리(36x36): 아이콘 파일이 있으면 그것을, 없으면 임시 글자
@@ -55,7 +53,7 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	slot.position = Vector2(8, 10)
 	slot.size = Vector2(40, 40)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_theme_stylebox_override("panel", _box(UIPalette.PANEL, UIPalette.ICON_SLOT_BORDER, 8))
+	slot.add_theme_stylebox_override("panel", _box(UIPalette.PAPER, UIPalette.BORDER, 8))
 	btn.add_child(slot)
 	var icon_path: String = it.get("icon", "")
 	if icon_path != "" and ResourceLoader.exists(icon_path):
@@ -67,21 +65,27 @@ func _make_button(i: int, it: Dictionary) -> Button:
 		tr.size = slot.size - Vector2(4, 4)
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(tr)
+		_parts[id] = {"icon": tr}
 	else:
-		slot.add_child(_label(it.get("glyph", "?"), Vector2(0, 6), Vector2(40, 28), 20, UIPalette.GLYPH, true))
+		var gl := _label(it.get("glyph", "?"), Vector2(0, 6), Vector2(40, 28), 20, UIPalette.TEXT, true)
+		slot.add_child(gl)
+		_parts[id] = {"glyph": gl}
 
 	var nm := _label(it["name"], Vector2(52, 6), Vector2(_btn_w() - 56.0, 30), 12, UIPalette.TEXT, false)
 	nm.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	btn.add_child(nm)
-	btn.add_child(_label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, UIPalette.ACCENT_TEXT, false))
+	var cost_label := _label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, UIPalette.TEXT, false)
+	btn.add_child(cost_label)
+	_parts[id]["name"] = nm
+	_parts[id]["cost"] = cost_label
 	# 단축키 배지(좌상단)
 	var badge := Panel.new()
 	badge.position = Vector2(-2, -2)
 	badge.size = Vector2(16, 16)
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_theme_stylebox_override("panel", _box(UIPalette.SECONDARY_DEEP, UIPalette.SECONDARY_DEEP, 8))
+	badge.add_theme_stylebox_override("panel", _box(UIPalette.TEXT, UIPalette.TEXT, 8))
 	btn.add_child(badge)
-	badge.add_child(_label(str(i + 1), Vector2(0, -1), Vector2(16, 16), 11, Color.WHITE, true))
+	badge.add_child(_label(str(i + 1), Vector2(0, -1), Vector2(16, 16), 11, UIPalette.PAPER, true))
 	return btn
 
 func _label(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, center: bool) -> Label:
@@ -96,33 +100,57 @@ func _label(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, ce
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l
 
-func _box(fill: Color, border: Color, radius := 10) -> StyleBoxFlat:
+## 버튼 상태별 스타일: 아이템 고유 파스텔 배경 + 공통 테두리. 조준 중이면 클릭색 + 파란 3px 외곽선
+func _apply_styles(btn: Button, id: String, aiming: bool) -> void:
+	var c: Array = UIPalette.ITEM_BG.get(id, UIPalette.ITEM_BG["swap"])
+	if aiming:
+		var aim := _box(c[2], UIPalette.BLUE_INK, 10, 3)
+		for st in ["normal", "hover", "pressed", "disabled"]:
+			btn.add_theme_stylebox_override(st, aim)
+		return
+	btn.add_theme_stylebox_override("normal", _box(c[0], UIPalette.CONTROL_BORDER))
+	btn.add_theme_stylebox_override("hover", _box(c[1], UIPalette.CONTROL_BORDER))
+	btn.add_theme_stylebox_override("pressed", _box(c[2], UIPalette.CONTROL_BORDER))
+	btn.add_theme_stylebox_override("disabled", _box(UIPalette.DISABLED_BG, UIPalette.DISABLED_BORDER))
+
+func _box(fill: Color, border: Color, radius := 10, width := 2) -> StyleBoxFlat:
 	var b := StyleBoxFlat.new()
 	b.bg_color = fill
 	b.border_color = border
-	b.set_border_width_all(2)
+	b.set_border_width_all(width)
 	b.set_corner_radius_all(radius)
 	return b
 
 func refresh() -> void:
 	_fill = _items.gauge / ItemDefs.gauge_max()
-	_gauge_label.text = "게이지 %d%%" % roundi(_items.gauge)
+	_gauge_label.text = ("★ " if _items.gauge >= ItemDefs.gauge_max() else "") + "게이지 %d%%" % roundi(_items.gauge)
 	for id in _buttons:
 		var usable := _items.can_use(id)
 		var btn: Button = _buttons[id]
 		btn.disabled = not usable
-		btn.modulate = Color.WHITE if usable else Color(1, 1, 1, 0.7)
+		var aiming: bool = id == "sword" and _items.aiming
+		_apply_styles(btn, id, aiming)
+		var p: Dictionary = _parts[id]
+		var txt := UIPalette.TEXT if (usable or aiming) else UIPalette.DISABLED_TEXT   # 글자는 읽히게, 아이콘만 흐리게
+		p["name"].add_theme_color_override("font_color", txt)
+		p["cost"].add_theme_color_override("font_color", txt)
+		p["cost"].text = "조준 중" if aiming else "%d%%" % int(ItemDefs.item(id).get("cost", 0))
+		if p.has("icon"):
+			p["icon"].modulate = Color.WHITE if (usable or aiming) else Color(1, 1, 1, 0.45)
+		if p.has("glyph"):
+			p["glyph"].add_theme_color_override("font_color", txt)
 	queue_redraw()
 
 func _draw() -> void:
 	var bar := Rect2(0, 0, size.x, GAUGE_H)
-	draw_style_box(_box(UIPalette.DIVIDER, UIPalette.PANEL_BORDER, 12), bar)
+	draw_style_box(_box(UIPalette.DIVIDER, UIPalette.BORDER, 12), bar)
 	if _fill > 0.0:
 		var fw := maxf((size.x - 4.0) * _fill, 8.0)
-		var fb := _box(UIPalette.ACCENT if _fill < 1.0 else UIPalette.GAUGE_FULL, UIPalette.ACCENT if _fill < 1.0 else UIPalette.GAUGE_FULL, 10)
+		var full := _fill >= 1.0
+		var fb := _box(UIPalette.CELL_FINAL_BG if full else UIPalette.GAUGE_FILL, UIPalette.GAUGE_FULL_BORDER if full else UIPalette.GAUGE_FILL, 10)
 		draw_style_box(fb, Rect2(2, 2, fw, GAUGE_H - 4))
 	# 비용 눈금선
 	for it in ItemDefs.items():
 		var x := size.x * float(it["cost"]) / ItemDefs.gauge_max()
 		if x < size.x - 2.0:
-			draw_line(Vector2(x, 3), Vector2(x, GAUGE_H - 3), Color(UIPalette.SECONDARY_DEEP, 0.7), 1.5)
+			draw_line(Vector2(x, 3), Vector2(x, GAUGE_H - 3), Color(UIPalette.TEXT, 0.45), 1.5)

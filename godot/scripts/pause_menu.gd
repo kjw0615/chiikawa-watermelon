@@ -16,7 +16,7 @@ func _ready() -> void:
 	_root.visible = false
 	add_child(_root)
 	var dim := ColorRect.new()
-	dim.color = Color(0.05, 0.03, 0.12, 0.55)
+	dim.color = Color(0.349, 0.267, 0.231, 0.35)
 	dim.size = _root.size
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(dim)
@@ -24,11 +24,11 @@ func _ready() -> void:
 	box.size = Vector2(320, 240)
 	box.position = Vector2(240, 280)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = UIPalette.PANEL
-	sb.border_color = UIPalette.PANEL_BORDER
+	sb.bg_color = UIPalette.CREAM
+	sb.border_color = UIPalette.BORDER
 	sb.set_border_width_all(4)
 	sb.set_corner_radius_all(22)
-	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_color = UIPalette.SHADOW
 	sb.shadow_size = 16
 	box.add_theme_stylebox_override("panel", sb)
 	_root.add_child(box)
@@ -38,12 +38,12 @@ func _ready() -> void:
 	t.size = Vector2(320, 44)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_font_size_override("font_size", 30)
-	t.add_theme_color_override("font_color", UIPalette.SECONDARY_DEEP)
+	t.add_theme_color_override("font_color", UIPalette.TEXT)
 	box.add_child(t)
-	resume_button = _button("계속하기", Vector2(60, 92), UIPalette.ACCENT)
+	resume_button = _button("계속하기", Vector2(60, 92), [UIPalette.PINK, UIPalette.PINK_HOVER, UIPalette.PINK_PRESSED])
 	resume_button.pressed.connect(resume)
 	box.add_child(resume_button)
-	quit_button = _button("종료하기", Vector2(60, 160), UIPalette.SECONDARY)
+	quit_button = _button("종료하기", Vector2(60, 160), UIPalette.QUIT_BG)
 	quit_button.pressed.connect(func(): get_tree().quit())
 	box.add_child(quit_button)
 
@@ -63,20 +63,12 @@ func _unhandled_input(e: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		resume()
 
-func _button(text: String, pos: Vector2, fill: Color) -> Button:
+func _button(text: String, pos: Vector2, states: Array) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.position = pos
 	b.size = Vector2(200, 54)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", 22)
-	for c in ["font_color", "font_hover_color", "font_pressed_color"]:
-		b.add_theme_color_override(c, Color.WHITE)
-	for st in ["normal", "hover", "pressed"]:
-		var bx := StyleBoxFlat.new()
-		bx.bg_color = fill.lightened(0.12) if st == "hover" else (fill.darkened(0.1) if st == "pressed" else fill)
-		bx.border_color = Color.WHITE
-		bx.set_border_width_all(3)
-		bx.set_corner_radius_all(27)
-		b.add_theme_stylebox_override(st, bx)
+	UIPalette.style_button(b, states)
 	return b
