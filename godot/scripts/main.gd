@@ -706,7 +706,8 @@ func _run_verify() -> void:
 	var path := ProjectSettings.globalize_path("res://").path_join("shot.png")
 	_save_shot(path)
 	print("drop-all: heads=", get_tree().get_nodes_in_group("heads").size(), " merges=", merges, " outside_box=", outside, " over=", over, " ", _settle_stats())
-	print("VERIFY ", "PASS" if ok and outside == 0 else "FAIL")
+	var val_ok := _auth_validator_test()
+	print("VERIFY ", "PASS" if ok and outside == 0 and val_ok else "FAIL")
 	get_tree().quit()
 
 func _spin_test() -> bool:
@@ -961,3 +962,27 @@ func _audit_tree(root: Node) -> Array:
 			print("  OVERFLOW %s '%s' font=%d need=%s avail=%s rect=%s parent=%s" % [c.get_path(), text.replace("
 ", "/"), fs, need.snapped(Vector2(0.1, 0.1)), avail, Rect2(c.position, c.size), par.size if par != null else Vector2.ZERO])
 	return [checked, bad]
+
+## 회원가입 검증 규칙 단위 점검(통과/실패 기대 케이스)
+func _auth_validator_test() -> bool:
+	var cases := [
+		["nick", "치이카와", true], ["nick", "Chii-123", true], ["nick", "가나", true], ["nick", "열두글자열두글자열두글자", true],
+		["nick", "a", false], ["nick", "열세글자열세글자열세글자열", false], ["nick", "치이 카와", false], ["nick", "ㅋㅋㅋ", false],
+		["nick", "chii_kawa", false], ["nick", "치이카와!", false], ["nick", "", false],
+		["pw", "abcd1234", true], ["pw", "Abcdefg1", true], ["pw", "1234abcD", true],
+		["pw", "abc123", false], ["pw", "abcdefgh", false], ["pw", "12345678", false], ["pw", "가나다라마바사1", false],
+		["email", "a@b.co", true], ["email", "chii.kawa+1@example.com", true],
+		["email", "abc", false], ["email", "a@b", false], ["email", "a@@b.com", false], ["email", "a b@c.com", false], ["email", "", false],
+	]
+	var ok := true
+	for c in cases:
+		var err: String = AuthValidator.nickname_error(c[1]) if c[0] == "nick" else (AuthValidator.password_error(c[1]) if c[0] == "pw" else AuthValidator.email_error(c[1]))
+		var pass_ := err == ""
+		if pass_ != c[2] or (not pass_ and err.length() < 8):
+			ok = false
+			print("  validator FAIL: %s '%s' expected=%s msg='%s'" % [c[0], c[1], c[2], err])
+	var mm := AuthValidator.signup_error("치이카와", "a@b.co", "abcd1234", "abcd12345") != ""
+	var good := AuthValidator.signup_error("치이카와", "a@b.co", "abcd1234", "abcd1234") == ""
+	ok = ok and mm and good
+	print("signup validation: %d cases %s" % [cases.size() + 2, "OK" if ok else "FAIL"])
+	return ok
