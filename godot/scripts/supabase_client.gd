@@ -27,7 +27,8 @@ func _ready() -> void:
 	if cfg.load(CONFIG_PATH) == OK:
 		_url = str(cfg.get_value("supabase", "url", "")).trim_suffix("/")
 		_key = str(cfg.get_value("supabase", "key", ""))
-	enabled = DisplayServer.get_name() != "headless" and _url != "" and _key != ""
+	var net_test := "--net-test" in OS.get_cmdline_user_args()   # 실서버 통신 점검용(헤드리스에서도 네트워크 허용)
+	enabled = (DisplayServer.get_name() != "headless" or net_test) and _url != "" and _key != ""
 
 ## 저장된 refresh_token 으로 자동 로그인 시도(타이틀 진입 시 한 번)
 func auto_login() -> void:

@@ -104,7 +104,8 @@ func _ready() -> void:
 	var verify := "--verify" in OS.get_cmdline_user_args()
 	var title_test := "--title-test" in OS.get_cmdline_user_args()
 	var text_audit := "--text-audit" in OS.get_cmdline_user_args()
-	_auto = _auto or verify or title_test or text_audit   # 자체 테스트 모드
+	var net_test := "--net-test" in OS.get_cmdline_user_args()
+	_auto = _auto or verify or title_test or text_audit or net_test   # 자체 테스트 모드
 	_build_cave()
 	_build_walls()
 	_art_bg = _make_art(BG_ART, -100)
@@ -154,13 +155,15 @@ func _ready() -> void:
 	_panel.help_pressed.connect(_open_help)
 	Supabase.auth_changed.connect(_update_hud)
 	_new_game()
-	if _auto and not title_test and not text_audit:
+	if _auto and not title_test and not text_audit and not net_test:
 		_set_state(State.PLAYING)   # 자체 테스트는 타이틀을 건너뜀
 	else:
 		_make_title()
 		_set_state(State.TITLE)
 		Supabase.auto_login()   # 저장된 토큰이 있으면 조용히 자동 로그인(실패해도 게임은 그대로)
-	if text_audit:
+	if net_test:
+		_run_net_test()
+	elif text_audit:
 		_run_text_audit()
 	elif title_test:
 		_run_title_test()
@@ -1089,3 +1092,50 @@ func _auth_validator_test() -> bool:
 	ok = ok and mm and good
 	print("signup validation: %d cases %s" % [cases.size() + 2, "OK" if ok else "FAIL"])
 	return ok
+
+## --net-test <이메일> <닉네임> <비밀번호>: 실서버 가입 -> 로그인 -> 점수 제출 -> 랭킹 조회 -> 자동로그인 -> 로그아웃 점검
+func _run_net_test() -> void:
+	var a := OS.get_cmdline_user_args()
+	var i := a.find("--net-test")
+	var email := a[i + 1]
+	var nick := a[i + 2]
+	var pw := a[i + 3]
+	var ok := true
+	print("net enabled=", Supabase.enabled)
+	var r: Dictionary = await Supabase.sign_up(nick, email, pw)
+	print("sign_up: ", r)
+	ok = ok and r["ok"] and Supabase.signed_in and Supabase.nickname == nick
+	var dup: Dictionary = await Supabase.sign_up(nick, "other-" + email, pw)
+	print("sign_up duplicate nickname rejected: ", dup)
+	ok = ok and not dup["ok"]
+	var r1: Dictionary = await Supabase.record_score(1234)
+	var r2: Dictionary = await Supabase.record_score(500)    # 낮은 점수는 갱신되면 안 됨
+	var r3: Dictionary = await Supabase.record_score(2222)
+	print("submit 1234 -> ", r1.get("data"), " | 500 -> ", r2.get("data"), " | 2222 -> ", r3.get("data"))
+	ok = ok and int(r1.get("data", -1)) == 1234 and int(r2.get("data", -1)) == 1234 and int(r3.get("data", -1)) == 2222
+	var top: Dictionary = await Supabase.fetch_top(10)
+	print("top10: ", top.get("data", top))
+	var found := false
+	if top["ok"]:
+		for row in top["data"]:
+			if row["nickname"] == nick and int(row["best_score"]) == 2222:
+				found = true
+	ok = ok and found
+	await Supabase.sign_out()
+	ok = ok and not Supabase.signed_in
+	var bad: Dictionary = await Supabase.sign_in(email, pw + "x")
+	print("wrong password: ", bad.get("error"))
+	ok = ok and not bad["ok"]
+	var li: Dictionary = await Supabase.sign_in(email, pw)
+	print("sign_in: ", li, " nickname=", Supabase.nickname, " best=", Supabase.server_best)
+	ok = ok and li["ok"] and Supabase.server_best == 2222
+	# 자동 로그인: 메모리 상태를 지우고 저장된 refresh_token 으로 복구되는지
+	Supabase.signed_in = false
+	Supabase._access = ""
+	await Supabase.auto_login()
+	print("auto_login: signed_in=", Supabase.signed_in, " nickname=", Supabase.nickname)
+	ok = ok and Supabase.signed_in and Supabase.nickname == nick
+	await Supabase.sign_out()   # 저장된 토큰 파일도 지움
+	ok = ok and not FileAccess.file_exists(Supabase.AUTH_PATH)
+	print("NET TEST ", "PASS" if ok else "FAIL")
+	get_tree().quit()
