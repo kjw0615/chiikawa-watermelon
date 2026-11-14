@@ -7,6 +7,7 @@ signal use_requested(id: String)
 
 const GAUGE_H := 26.0
 const BTN_H := 60.0
+const STACK_GAP := 1.0   # 이름과 비용 사이 세로 간격(px)
 const GAP := 10.0
 
 var _items: ItemSystem
@@ -75,11 +76,14 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	var nm := _label(it["name"], Vector2(52, 6), Vector2(_btn_w() - 56.0, 30), 12, UIPalette.TEXT, false)
 	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # 띄어쓰기 기준 2줄(엉덩이/흔들기)
 	nm.add_theme_constant_override("line_spacing", -2)
+	nm.add_theme_font_override("font", UIPalette.button_font())   # 버튼 글자는 망고보드별별
 	btn.add_child(nm)
 	var cost_label := _label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, UIPalette.TEXT, false)
+	cost_label.add_theme_font_override("font", UIPalette.button_font())
 	btn.add_child(cost_label)
 	_parts[id]["name"] = nm
 	_parts[id]["cost"] = cost_label
+	_stack_labels(nm, cost_label)
 	# 단축키 배지(좌상단)
 	var badge := Panel.new()
 	badge.position = Vector2(-2, -2)
@@ -91,6 +95,21 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	bn.vertical_alignment = VERTICAL_ALIGNMENT_CENTER   # 줄 높이(약 24px) 상자를 배지 중앙에 맞춤
 	badge.add_child(bn)
 	return btn
+
+## 이름과 비용을 한 덩어리로 붙여 버튼 세로 중앙에 둔다(두 라벨 사이 간격 최소화)
+func _stack_labels(nm: Label, cost: Label) -> void:
+	# 보조 폰트 때문에 라벨 줄 상자(24px)가 글자(12px)보다 훨씬 크므로, 실제 글자 높이(크기 x 1.2)로 배치한다
+	var nm_fs := nm.get_theme_font_size("font_size")
+	var cost_fs := cost.get_theme_font_size("font_size")
+	var one_line := nm.get_theme_font("font").get_string_size(nm.text, HORIZONTAL_ALIGNMENT_LEFT, -1, nm_fs).x <= nm.size.x
+	var lines := 1.0 if one_line else 2.0
+	var nm_h := ceilf(nm_fs * 1.2) * roundf(lines)
+	var cost_h := ceilf(cost_fs * 1.2)
+	var top := maxf((BTN_H - (nm_h + cost_h + STACK_GAP)) / 2.0 - 3.0, 1.0)   # -3: 라벨 줄 상자 위쪽 여백 보정
+	nm.position.y = top
+	nm.size.y = nm_h + 8.0
+	cost.position.y = top + nm_h + STACK_GAP
+	cost.size.y = cost_h + 8.0
 
 func _label(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, center: bool) -> Label:
 	var l := Label.new()

@@ -78,6 +78,13 @@ static func title_font() -> Font:
 	f.fallbacks = [load("res://assets/fonts/body_font.tres")]
 	return f
 
+## 버튼 글자용 폰트(망고보드별별). 없는 기호는 본문 폰트로 대체된다.
+static func button_font() -> Font:
+	var f := FontVariation.new()
+	f.base_font = load("res://assets/fonts/MangoByeolbyeol-subset.ttf")
+	f.fallbacks = [load("res://assets/fonts/body_font.tres")]
+	return f
+
 static func circle_texture(col: Color, d := 20) -> ImageTexture:
 	var img := Image.create(d, d, false, Image.FORMAT_RGBA8)
 	var c := Vector2(d, d) / 2.0 - Vector2(0.5, 0.5)

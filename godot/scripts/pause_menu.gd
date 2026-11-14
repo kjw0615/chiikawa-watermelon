@@ -71,7 +71,7 @@ func _button(text: String, pos: Vector2, states: Array) -> Button:
 	b.position = pos
 	b.size = Vector2(200, 54)
 	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_override("font", UIPalette.title_font())
+	b.add_theme_font_override("font", UIPalette.button_font())
 	b.add_theme_font_size_override("font_size", 22)
 	UIPalette.style_button(b, states)
 	return b

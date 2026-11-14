@@ -469,7 +469,7 @@ func _modal_button(text: String, pos: Vector2, states: Array) -> Button:
 	b.position = pos
 	b.size = Vector2(118, 54)
 	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_override("font", UIPalette.title_font())
+	b.add_theme_font_override("font", UIPalette.button_font())
 	b.add_theme_font_size_override("font_size", 22)
 	UIPalette.style_button(b, states)
 	return b
@@ -915,6 +915,8 @@ func _run_text_audit() -> void:
 	_set_state(State.PLAYING)
 	_over_modal.visible = true
 	_over_score.text = "점수 1234567"
+	for id in _skill_bar._parts:
+		_skill_bar._parts[id]["cost"].text = "조준 중"   # 가장 긴 비용 칸 문구(조준 모드)
 	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]

@@ -55,7 +55,7 @@ func _ready() -> void:
 	start_button.size = Vector2(280, 76)
 	start_button.position = Vector2((size.x - 280.0) / 2.0, 430.0)
 	start_button.focus_mode = Control.FOCUS_NONE
-	start_button.add_theme_font_override("font", UIPalette.title_font())
+	start_button.add_theme_font_override("font", UIPalette.button_font())
 	start_button.add_theme_font_size_override("font_size", 32)
 	start_button.add_theme_color_override("font_color", UIPalette.TEXT)
 	start_button.add_theme_color_override("font_hover_color", UIPalette.TEXT)
