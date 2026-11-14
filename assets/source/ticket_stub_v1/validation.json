@@ -1,0 +1,127 @@
+{
+  "file": "godot/assets/effects/spritesheets/bazaar_ticket.png",
+  "size": [
+    768,
+    512
+  ],
+  "frames": [
+    {
+      "frame": 0,
+      "visible_bounds_alpha_gt64": [
+        55,
+        73,
+        208,
+        187
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "frame": 1,
+      "visible_bounds_alpha_gt64": [
+        38,
+        94,
+        215,
+        190
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "frame": 2,
+      "visible_bounds_alpha_gt64": [
+        28,
+        60,
+        211,
+        217
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "frame": 3,
+      "visible_bounds_alpha_gt64": [
+        38,
+        59,
+        212,
+        184
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "frame": 4,
+      "visible_bounds_alpha_gt64": [
+        23,
+        61,
+        218,
+        198
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "frame": 5,
+      "visible_bounds_alpha_gt64": [
+        8,
+        88,
+        232,
+        197
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata_unchanged": true,
+  "alpha_note": "Corners alpha 0..1/255 due to resampling; visible content remains within cell margins.",
+  "visual_review": "Right small stub tears off; both exchange arrows retained on main ticket; cream-background reviewed.",
+  "sha256": "71a1cb7ea1ed016f883cb0a863643327473278ecf318786bc5f7c5e25f566a8d"
+}
