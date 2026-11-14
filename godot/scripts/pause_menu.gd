@@ -24,8 +24,8 @@ func _ready() -> void:
 	box.size = Vector2(320, 240)
 	box.position = Vector2(240, 280)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color("fffaff")
-	sb.border_color = Color("c9bfe8")
+	sb.bg_color = UIPalette.PANEL
+	sb.border_color = UIPalette.PANEL_BORDER
 	sb.set_border_width_all(4)
 	sb.set_corner_radius_all(22)
 	sb.shadow_color = Color(0, 0, 0, 0.4)
@@ -38,12 +38,12 @@ func _ready() -> void:
 	t.size = Vector2(320, 44)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_font_size_override("font_size", 30)
-	t.add_theme_color_override("font_color", Color("7f63c9"))
+	t.add_theme_color_override("font_color", UIPalette.SECONDARY_DEEP)
 	box.add_child(t)
-	resume_button = _button("계속하기", Vector2(60, 92), Color("ff8fb8"))
+	resume_button = _button("계속하기", Vector2(60, 92), UIPalette.ACCENT)
 	resume_button.pressed.connect(resume)
 	box.add_child(resume_button)
-	quit_button = _button("종료하기", Vector2(60, 160), Color("b79bf0"))
+	quit_button = _button("종료하기", Vector2(60, 160), UIPalette.SECONDARY)
 	quit_button.pressed.connect(func(): get_tree().quit())
 	box.add_child(quit_button)
 

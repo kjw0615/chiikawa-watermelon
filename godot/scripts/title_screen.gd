@@ -48,14 +48,14 @@ func _ready() -> void:
 	start_button.add_theme_color_override("font_color", Color.WHITE)
 	start_button.add_theme_color_override("font_hover_color", Color.WHITE)
 	start_button.add_theme_color_override("font_pressed_color", Color.WHITE)
-	start_button.add_theme_color_override("font_outline_color", Color("c2477f"))
+	start_button.add_theme_color_override("font_outline_color", UIPalette.ACCENT_TEXT)
 	start_button.add_theme_constant_override("outline_size", 4)
-	start_button.add_theme_stylebox_override("normal", _btn_box(Color("ff8fb8")))
-	start_button.add_theme_stylebox_override("hover", _btn_box(Color("ffa6c8")))
-	start_button.add_theme_stylebox_override("pressed", _btn_box(Color("f0709f")))
+	start_button.add_theme_stylebox_override("normal", _btn_box(UIPalette.ACCENT))
+	start_button.add_theme_stylebox_override("hover", _btn_box(UIPalette.ACCENT_HOVER))
+	start_button.add_theme_stylebox_override("pressed", _btn_box(UIPalette.ACCENT_PRESSED))
 	start_button.pressed.connect(func(): start_pressed.emit())
 	add_child(start_button)
-	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, Color("e9ddff"), 4))
+	add_child(_text("Enter / Space 로도 시작할 수 있어요", Vector2(0, 520), Vector2(size.x, 24), 15, UIPalette.TEXT_ON_DARK, 4))
 
 	# 하단 면책 문구(공식 오인 방지)
 	var bar := Panel.new()
@@ -64,13 +64,13 @@ func _ready() -> void:
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.05, 0.03, 0.12, 0.6)
-	sb.border_color = Color("b79bf0")
+	sb.border_color = UIPalette.SECONDARY
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(14)
 	bar.add_theme_stylebox_override("panel", sb)
 	add_child(bar)
 	add_child(_text(DISCLAIMER_KO, Vector2(30, 682), Vector2(size.x - 60.0, 28), 17, Color.WHITE, 3))
-	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, Color("e9ddff"), 3)
+	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, UIPalette.TEXT_ON_DARK, 3)
 	en.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(en)
 
@@ -80,10 +80,10 @@ func _add_title() -> void:
 	bold.base_font = load("res://assets/fonts/NotoSansKR-subset.ttf")
 	bold.variation_opentype = {0x77676874: 900}   # "wght" 축 최대 굵기
 	bold.variation_embolden = 0.25
-	var t := _text(TITLE_KO, Vector2(0, 60), Vector2(size.x, 110), 80, Color("fff6e0"), 16)
+	var t := _text(TITLE_KO, Vector2(0, 60), Vector2(size.x, 110), 80, UIPalette.CREAM, 16)
 	t.add_theme_font_override("font", bold)
-	t.add_theme_color_override("font_outline_color", Color("ff7fae"))
-	t.add_theme_color_override("font_shadow_color", Color("b83a73"))
+	t.add_theme_color_override("font_outline_color", UIPalette.TITLE_OUTLINE)
+	t.add_theme_color_override("font_shadow_color", UIPalette.TITLE_SHADOW)
 	t.add_theme_constant_override("shadow_offset_x", 0)
 	t.add_theme_constant_override("shadow_offset_y", 8)
 	t.add_theme_constant_override("shadow_outline_size", 16)
@@ -94,8 +94,8 @@ func _add_title() -> void:
 	ribbon.position = Vector2((size.x - 420.0) / 2.0, 178)
 	ribbon.size = Vector2(420, 46)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color("ff9cc2")
-	sb.border_color = Color("fff6e0")
+	sb.bg_color = UIPalette.RIBBON
+	sb.border_color = UIPalette.CREAM
 	sb.set_border_width_all(3)
 	sb.set_corner_radius_all(23)
 	sb.shadow_color = Color(0, 0, 0, 0.3)
@@ -104,9 +104,9 @@ func _add_title() -> void:
 	ribbon.add_theme_stylebox_override("panel", sb)
 	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ribbon)
-	var sub := _text(TITLE_EN, Vector2(0, 182), Vector2(size.x, 38), 26, Color("fffaf0"), 5)
+	var sub := _text(TITLE_EN, Vector2(0, 182), Vector2(size.x, 38), 26, UIPalette.CREAM_LIGHT, 5)
 	sub.add_theme_font_override("font", bold)
-	sub.add_theme_color_override("font_outline_color", Color("d9558a"))
+	sub.add_theme_color_override("font_outline_color", UIPalette.ACCENT_DEEP)
 	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(sub)
 
@@ -130,7 +130,7 @@ func _text(t: String, pos: Vector2, sz: Vector2, font_size: int, col: Color, out
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color("2d2552"))
+	l.add_theme_color_override("font_outline_color", UIPalette.OUTLINE)
 	l.add_theme_constant_override("outline_size", outline)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l

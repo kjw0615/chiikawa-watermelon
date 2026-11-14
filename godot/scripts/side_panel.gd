@@ -13,7 +13,7 @@ var _score_label: Label
 func _ready() -> void:
 	var bg := Panel.new()
 	bg.size = size
-	bg.add_theme_stylebox_override("panel", _box(Color("fffaff"), Color("c9bfe8"), 14))
+	bg.add_theme_stylebox_override("panel", _box(UIPalette.PANEL, UIPalette.PANEL_BORDER, 14))
 	add_child(bg)
 
 	# 점수(최고점수는 표기하지 않음)
@@ -21,7 +21,7 @@ func _ready() -> void:
 	_score_label = _label(Vector2(0, 28), 36)
 	_score_label.size = Vector2(size.x, 46)
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_score_label.add_theme_color_override("font_color", Color("c2477f"))
+	_score_label.add_theme_color_override("font_color", UIPalette.ACCENT_TEXT)
 	add_child(_score_label)
 	_divider(86.0)
 
@@ -29,7 +29,7 @@ func _ready() -> void:
 	var next_box := Panel.new()
 	next_box.position = Vector2((size.x - 84.0) / 2.0, 122)
 	next_box.size = Vector2(84, 84)
-	next_box.add_theme_stylebox_override("panel", _box(Color("f0e9ff"), Color("b3a5d6"), 12))
+	next_box.add_theme_stylebox_override("panel", _box(UIPalette.SLOT_BG, UIPalette.SLOT_BORDER, 12))
 	add_child(next_box)
 	_next_icon = _icon_rect(Vector2(6, 6), Vector2(72, 72))
 	next_box.add_child(_next_icon)
@@ -51,7 +51,7 @@ func _ready() -> void:
 		cell.position = Vector2(x0 + (i % COLS) * CELL + 1, 302 + (i / COLS) * 60.0)
 		cell.size = Vector2(CELL - 2.0, CELL - 2.0)
 		cell.tooltip_text = "%d. %s" % [i + 1, NodeDefs.node_name(i)]
-		var sb := _box(Color("ffe3ee") if droppable else Color("ece4fb"), Color("f08fb5") if droppable else Color("b79bf0"), 19)
+		var sb := _box(UIPalette.PINK_SOFT if droppable else UIPalette.LOCKED_BG, UIPalette.CELL_BORDER_DROP if droppable else UIPalette.SECONDARY, 19)
 		cell.add_theme_stylebox_override("panel", sb)   # 둥근 미니 원형 뱃지
 		add_child(cell)
 		var icon := _icon_rect(Vector2(4, 4), cell.size - Vector2(8, 8))
@@ -65,7 +65,7 @@ func _ready() -> void:
 	var note := _label(Vector2(14, 424), 12)
 	note.size = Vector2(size.x - 28, 56)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.add_theme_color_override("font_color", Color("7a6da3"))
+	note.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
 	note.text = "분홍 1~%d단계: 랜덤 드롭 / 보라: 합체로만 생성\n%d단계끼리 합체 시 소멸 +100점" % [NodeDefs.drop_max_index() + 1, NodeDefs.count()]
 	add_child(note)
 
@@ -79,7 +79,7 @@ func set_next(stage: int) -> void:
 
 func _divider(y: float) -> void:
 	var d := ColorRect.new()
-	d.color = Color("e3d9f5")
+	d.color = UIPalette.DIVIDER
 	d.position = Vector2(16, y)
 	d.size = Vector2(size.x - 32, 2)
 	add_child(d)
@@ -95,7 +95,7 @@ func _label(pos: Vector2, font_size: int) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.add_theme_font_size_override("font_size", font_size)
-	l.add_theme_color_override("font_color", Color("4b3f72"))
+	l.add_theme_color_override("font_color", UIPalette.TEXT)
 	return l
 
 func _icon_rect(pos: Vector2, sz: Vector2) -> TextureRect:

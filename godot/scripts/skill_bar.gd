@@ -22,7 +22,7 @@ func setup(items: ItemSystem) -> void:
 	_gauge_label.size = Vector2(size.x, GAUGE_H - 4)
 	_gauge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_gauge_label.add_theme_font_size_override("font_size", 13)
-	_gauge_label.add_theme_color_override("font_color", Color("3b2f63"))
+	_gauge_label.add_theme_color_override("font_color", UIPalette.TEXT_STRONG)
 	_gauge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_gauge_label)
 
@@ -43,10 +43,10 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	btn.size = Vector2(_btn_w(), BTN_H)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.tooltip_text = "%s (%d%%)" % [it["full_name"], int(it["cost"])]
-	btn.add_theme_stylebox_override("normal", _box(Color("fff0f6"), Color("e9a9c6")))
-	btn.add_theme_stylebox_override("hover", _box(Color("ffe3ee"), Color("e48ab3")))
-	btn.add_theme_stylebox_override("pressed", _box(Color("ffd2e3"), Color("d4639a")))
-	btn.add_theme_stylebox_override("disabled", _box(Color("ece8f3"), Color("cfc8de")))
+	btn.add_theme_stylebox_override("normal", _box(UIPalette.BTN_BG, UIPalette.BTN_BORDER))
+	btn.add_theme_stylebox_override("hover", _box(UIPalette.PINK_SOFT, UIPalette.BTN_BORDER_HOVER))
+	btn.add_theme_stylebox_override("pressed", _box(UIPalette.BTN_BG_PRESSED, UIPalette.BTN_BORDER_PRESSED))
+	btn.add_theme_stylebox_override("disabled", _box(UIPalette.BTN_DISABLED_BG, UIPalette.BTN_DISABLED_BORDER))
 	var id: String = it["id"]
 	btn.pressed.connect(func(): use_requested.emit(id))
 
@@ -55,7 +55,7 @@ func _make_button(i: int, it: Dictionary) -> Button:
 	slot.position = Vector2(8, 10)
 	slot.size = Vector2(40, 40)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_theme_stylebox_override("panel", _box(Color("fffaff"), Color("d9cbee"), 8))
+	slot.add_theme_stylebox_override("panel", _box(UIPalette.PANEL, UIPalette.ICON_SLOT_BORDER, 8))
 	btn.add_child(slot)
 	var icon_path: String = it.get("icon", "")
 	if icon_path != "" and ResourceLoader.exists(icon_path):
@@ -68,18 +68,18 @@ func _make_button(i: int, it: Dictionary) -> Button:
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(tr)
 	else:
-		slot.add_child(_label(it.get("glyph", "?"), Vector2(0, 6), Vector2(40, 28), 20, Color("a45a85"), true))
+		slot.add_child(_label(it.get("glyph", "?"), Vector2(0, 6), Vector2(40, 28), 20, UIPalette.GLYPH, true))
 
-	var nm := _label(it["name"], Vector2(52, 6), Vector2(_btn_w() - 56.0, 30), 12, Color("4b3f72"), false)
+	var nm := _label(it["name"], Vector2(52, 6), Vector2(_btn_w() - 56.0, 30), 12, UIPalette.TEXT, false)
 	nm.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	btn.add_child(nm)
-	btn.add_child(_label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, Color("c2477f"), false))
+	btn.add_child(_label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, UIPalette.ACCENT_TEXT, false))
 	# 단축키 배지(좌상단)
 	var badge := Panel.new()
 	badge.position = Vector2(-2, -2)
 	badge.size = Vector2(16, 16)
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_theme_stylebox_override("panel", _box(Color("7f63c9"), Color("7f63c9"), 8))
+	badge.add_theme_stylebox_override("panel", _box(UIPalette.SECONDARY_DEEP, UIPalette.SECONDARY_DEEP, 8))
 	btn.add_child(badge)
 	badge.add_child(_label(str(i + 1), Vector2(0, -1), Vector2(16, 16), 11, Color.WHITE, true))
 	return btn
@@ -116,13 +116,13 @@ func refresh() -> void:
 
 func _draw() -> void:
 	var bar := Rect2(0, 0, size.x, GAUGE_H)
-	draw_style_box(_box(Color("e3d9f5"), Color("c9bfe8"), 12), bar)
+	draw_style_box(_box(UIPalette.DIVIDER, UIPalette.PANEL_BORDER, 12), bar)
 	if _fill > 0.0:
 		var fw := maxf((size.x - 4.0) * _fill, 8.0)
-		var fb := _box(Color("ff8fb8") if _fill < 1.0 else Color("ffb347"), Color("ff8fb8") if _fill < 1.0 else Color("ffb347"), 10)
+		var fb := _box(UIPalette.ACCENT if _fill < 1.0 else UIPalette.GAUGE_FULL, UIPalette.ACCENT if _fill < 1.0 else UIPalette.GAUGE_FULL, 10)
 		draw_style_box(fb, Rect2(2, 2, fw, GAUGE_H - 4))
 	# 비용 눈금선
 	for it in ItemDefs.items():
 		var x := size.x * float(it["cost"]) / ItemDefs.gauge_max()
 		if x < size.x - 2.0:
-			draw_line(Vector2(x, 3), Vector2(x, GAUGE_H - 3), Color("7f63c9", 0.7), 1.5)
+			draw_line(Vector2(x, 3), Vector2(x, GAUGE_H - 3), Color(UIPalette.SECONDARY_DEEP, 0.7), 1.5)

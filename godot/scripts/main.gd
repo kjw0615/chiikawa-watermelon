@@ -162,7 +162,7 @@ func _build_credit() -> void:
 	_credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_credit.add_theme_font_size_override("font_size", 9)
 	_credit.add_theme_color_override("font_color", Color("ffffff"))
-	_credit.add_theme_color_override("font_outline_color", Color("2d2552"))
+	_credit.add_theme_color_override("font_outline_color", UIPalette.OUTLINE)
 	_credit.add_theme_constant_override("outline_size", 3)
 	_credit.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_credit.z_index = 45
@@ -426,8 +426,8 @@ func _build_over_modal() -> void:
 	_over_modal.z_index = 60
 	_over_modal.visible = false
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color("fffaff")
-	sb.border_color = Color("c9bfe8")
+	sb.bg_color = UIPalette.PANEL
+	sb.border_color = UIPalette.PANEL_BORDER
 	sb.set_border_width_all(4)
 	sb.set_corner_radius_all(22)
 	sb.shadow_color = Color(0, 0, 0, 0.4)
@@ -440,19 +440,19 @@ func _build_over_modal() -> void:
 	t.size = Vector2(300, 44)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_font_size_override("font_size", 34)
-	t.add_theme_color_override("font_color", Color("c2477f"))
+	t.add_theme_color_override("font_color", UIPalette.ACCENT_TEXT)
 	_over_modal.add_child(t)
 	_over_score = Label.new()
 	_over_score.position = Vector2(0, 70)
 	_over_score.size = Vector2(300, 32)
 	_over_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_over_score.add_theme_font_size_override("font_size", 24)
-	_over_score.add_theme_color_override("font_color", Color("4b3f72"))
+	_over_score.add_theme_color_override("font_color", UIPalette.TEXT)
 	_over_modal.add_child(_over_score)
-	_over_restart = _modal_button("다시하기", Vector2(24, 130), Color("ff8fb8"), Color("c2477f"))
+	_over_restart = _modal_button("다시하기", Vector2(24, 130), UIPalette.ACCENT, UIPalette.ACCENT_TEXT)
 	_over_restart.pressed.connect(_new_game)
 	_over_modal.add_child(_over_restart)
-	_over_quit = _modal_button("종료하기", Vector2(158, 130), Color("b79bf0"), Color("6a4fb5"))
+	_over_quit = _modal_button("종료하기", Vector2(158, 130), UIPalette.SECONDARY, UIPalette.SECONDARY_DARK)
 	_over_quit.pressed.connect(func(): get_tree().quit())
 	_over_modal.add_child(_over_quit)
 
@@ -476,12 +476,12 @@ func _modal_button(text: String, pos: Vector2, fill: Color, outline: Color) -> B
 
 ## 스피커 아이콘(음소거면 빨간 X)
 func _draw_speaker() -> void:
-	var col := Color("7f63c9") if not _muted else Color("a89cc8")
+	var col := UIPalette.SECONDARY_DEEP if not _muted else UIPalette.TEXT_DISABLED
 	_speaker.draw_rect(Rect2(5, 13, 7, 10), col)
 	_speaker.draw_colored_polygon(PackedVector2Array([Vector2(12, 13), Vector2(21, 6), Vector2(21, 30), Vector2(12, 23)]), col)
 	if _muted:
-		_speaker.draw_line(Vector2(25, 12), Vector2(34, 24), Color("e0457b"), 3.0)
-		_speaker.draw_line(Vector2(34, 12), Vector2(25, 24), Color("e0457b"), 3.0)
+		_speaker.draw_line(Vector2(25, 12), Vector2(34, 24), UIPalette.MUTE_X, 3.0)
+		_speaker.draw_line(Vector2(34, 12), Vector2(25, 24), UIPalette.MUTE_X, 3.0)
 	else:
 		_speaker.draw_arc(Vector2(21, 18), 7.0, -0.9, 0.9, 10, col, 2.5)
 		_speaker.draw_arc(Vector2(21, 18), 12.0, -0.9, 0.9, 12, col, 2.5)
@@ -492,8 +492,8 @@ func _build_audio_ui() -> void:
 	box.position = Vector2(520, 728)
 	box.size = Vector2(264, 64)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color("fffaff")
-	sb.border_color = Color("c9bfe8")
+	sb.bg_color = UIPalette.PANEL
+	sb.border_color = UIPalette.PANEL_BORDER
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(12)
 	box.add_theme_stylebox_override("panel", sb)
@@ -520,7 +520,7 @@ func _build_audio_ui() -> void:
 	_vol_label.size = Vector2(60, 22)
 	_vol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_vol_label.add_theme_font_size_override("font_size", 13)
-	_vol_label.add_theme_color_override("font_color", Color("4b3f72"))
+	_vol_label.add_theme_color_override("font_color", UIPalette.TEXT)
 	box.add_child(_vol_label)
 
 	_vol_slider = HSlider.new()
@@ -531,12 +531,12 @@ func _build_audio_ui() -> void:
 	_vol_slider.position = Vector2(52, 24)
 	_vol_slider.size = Vector2(140, 16)
 	var track := StyleBoxFlat.new()
-	track.bg_color = Color("e3d9f5")
+	track.bg_color = UIPalette.DIVIDER
 	track.set_corner_radius_all(4)
 	track.content_margin_top = 4
 	track.content_margin_bottom = 4
 	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("b79bf0")
+	fill.bg_color = UIPalette.SECONDARY
 	fill.set_corner_radius_all(4)
 	fill.content_margin_top = 4
 	fill.content_margin_bottom = 4
