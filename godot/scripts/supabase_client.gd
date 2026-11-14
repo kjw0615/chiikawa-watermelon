@@ -80,10 +80,18 @@ func sign_in(nick: String, password: String) -> Dictionary:
 	return {"ok": true, "message": "%s님, 어서 와요!" % nickname}
 
 ## 비밀번호 재설정 메일 발송(/auth/v1/recover). 서버는 가입 여부와 관계없이 성공으로 답하므로 이메일 존재 여부는 알려주지 않는다
-func send_password_reset(email: String) -> Dictionary:
+func send_password_reset(nick: String, email: String) -> Dictionary:
+	if nick == "":
+		return {"ok": false, "error": "아이디를 입력해 주세요."}
 	var e := AuthValidator.email_error(email)
 	if e != "":
 		return {"ok": false, "error": e}
+	# 아이디와 이메일이 같은 회원일 때만 메일 발송(서버 RPC reset_email_matches)
+	var m := await _rpc("reset_email_matches", {"p_nick": nick, "p_email": email}, false)
+	if not m["ok"]:
+		return m
+	if m["data"] != true:
+		return {"ok": false, "error": "아이디와 이메일이 일치하는 회원을 찾지 못했어요. 가입할 때 쓴 정보를 확인해 주세요. (여러 번 틀렸다면 잠시 후 다시 시도해 주세요)"}
 	var r := await _auth_request("/auth/v1/recover", {"email": email})
 	if not r["ok"]:
 		if r.get("status", 0) == 429:

@@ -226,6 +226,7 @@ func _go_title() -> void:
 	get_tree().paused = false
 	_dragging = false
 	items.cancel_aim(false)
+	Audio.stop_bgm()
 	_set_state(State.TITLE)
 	_new_game()
 	if _title == null:
@@ -235,10 +236,10 @@ func _go_title() -> void:
 func _on_start_pressed() -> void:
 	if state != State.TITLE or _title == null or _title.blocked:
 		return
-	if Supabase.signed_in or not Supabase.enabled:
-		_start_game()
+	if Supabase.signed_in:
+		_start_game()   # 로그인 상태: 경고 없이 바로 시작
 	else:
-		_confirm_modal.open()
+		_confirm_modal.open()   # 비로그인: 기록이 저장되지 않는다는 안내 팝업
 		_sync_title_block()
 
 func _open_help() -> void:
@@ -253,6 +254,7 @@ func _start_game() -> void:
 		_title = null
 	_set_state(State.PLAYING)
 	_new_game()
+	Audio.play_bgm()
 
 func _new_game() -> void:
 	_dragging = false
@@ -921,10 +923,13 @@ func _run_title_test() -> void:
 	var lay_ok := _panel.position.x >= art_right + 4.0 and _skill_bar.position.x >= _panel.position.x and _panel.position.x + _panel.size.x <= 800.0
 	print("sidebar x=%.0f art_right=%.0f no_overlap %s" % [_panel.position.x, art_right, "OK" if lay_ok else "FAIL"])
 	ok = ok and lay_ok
-	_title.start_button.pressed.emit()
+	var bgm_title_off := not Audio.bgm_on   # 타이틀에서는 BGM 꺼짐
+	_test_press_start()
 	await get_tree().create_timer(0.3).timeout
 	var play_ok := state == State.PLAYING and _title == null and _panel.visible and _credit.visible and _credit.text.contains("비영리 팬 메이드") and _credit.text.contains("Nagano / Chiikawa Committee")
 	print("start pressed: state=PLAYING ui_visible=%s credit=%s %s" % [_panel.visible, _credit.visible, "OK" if play_ok else "FAIL"])
+	play_ok = play_ok and Audio.bgm_on and bgm_title_off   # 게임 시작하면 BGM 켜짐
+	print("bgm: title off=%s, in-game on=%s" % [bgm_title_off, Audio.bgm_on])
 	ok = ok and play_ok
 	# ESC 일시정지 메뉴: 열면 트리 정지 + 드롭 차단, 닫으면 재개
 	var esc := InputEventKey.new()
@@ -965,8 +970,8 @@ func _run_title_test() -> void:
 	_over_modal.visible = true
 	_over_quit.pressed.emit()
 	await get_tree().create_timer(0.2).timeout
-	var home_ok := state == State.TITLE and _title != null and not _panel.visible and not _over_modal.visible and not get_tree().paused
-	_title.start_button.pressed.emit()
+	var home_ok := state == State.TITLE and _title != null and not _panel.visible and not _over_modal.visible and not get_tree().paused and not Audio.bgm_on
+	_test_press_start()
 	await get_tree().create_timer(0.2).timeout
 	_pause_menu.open()
 	_pause_menu.quit_button.pressed.emit()
@@ -975,8 +980,6 @@ func _run_title_test() -> void:
 	print("back to title (over modal, pause menu): %s" % ["OK" if home_ok else "FAIL"])
 	ok = ok and home_ok
 	# 시작 버튼: 비로그인이면 확인 팝업(시작하기/로그인하기), 로그인이면 즉시 시작
-	var was_enabled := Supabase.enabled
-	Supabase.enabled = true   # 오프라인 테스트에서도 비로그인 경로를 검증(네트워크 호출 없음)
 	_title.start_button.pressed.emit()
 	var c1 := _confirm_modal.is_open() and state == State.TITLE and _title.blocked
 	_confirm_modal.login_button.pressed.emit()
@@ -991,7 +994,6 @@ func _run_title_test() -> void:
 	_title.start_button.pressed.emit()
 	var c4 := state == State.PLAYING and not _confirm_modal.is_open()
 	Supabase.signed_in = false
-	Supabase.enabled = was_enabled
 	_go_title()
 	var confirm_ok := c1 and c2 and c3 and c4
 	print("start confirm (guest popup %s, login btn %s, guest start %s, signed-in direct %s) %s" % [c1, c2, c3, c4, "OK" if confirm_ok else "FAIL"])
@@ -1036,10 +1038,13 @@ func _run_title_test() -> void:
 	var login_form_ok := msg3.contains("아이디를 입력") and msg4.contains("비밀번호를 입력") and not (_auth_modal._fields["email"]["edit"] as LineEdit).visible and _auth_modal._forgot.visible
 	_auth_modal._forgot.pressed.emit()
 	var reset_open := _reset_modal.is_open()
+	await _reset_modal._on_send()
+	var msg5a: String = _reset_modal._msg.text   # 아이디 비움
+	_reset_modal.nick_edit.text = "치이카와"
 	_reset_modal.email_edit.text = "bad"
 	await _reset_modal._on_send()
 	var msg5: String = _reset_modal._msg.text
-	var reset_ok := reset_open and msg5.contains("이메일 형식")
+	var reset_ok := reset_open and msg5a.contains("아이디를 입력") and msg5.contains("이메일 형식")
 	_reset_modal.close()
 	_auth_modal.close()
 	print("login form (nickname+password, forgot btn): '%s' / '%s' %s ; reset modal: '%s' %s" % [msg3, msg4, "OK" if login_form_ok else "FAIL", msg5, "OK" if reset_ok else "FAIL"])
@@ -1054,6 +1059,12 @@ func _run_title_test() -> void:
 	get_tree().quit()
 
 ## 타이틀 상태에서는 드롭/아이템 입력이 막히는지 확인
+## 테스트용: 시작 버튼 -> 비로그인 확인 팝업이 뜨면 '시작하기'까지 누른다
+func _test_press_start() -> void:
+	_title.start_button.pressed.emit()
+	if _confirm_modal.is_open():
+		_confirm_modal.start_button.pressed.emit()
+
 func _unhandled_input_blocked_check() -> void:
 	var ev := InputEventMouseButton.new()
 	ev.button_index = MOUSE_BUTTON_LEFT

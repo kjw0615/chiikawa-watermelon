@@ -55,6 +55,7 @@ func _add_field(key: String, caption: String, secret: bool) -> void:
 	var e := LineEdit.new()
 	e.size = Vector2(box_size.x - 80, 36)
 	e.secret = secret
+	e.secret_character = "*"   # 웹에서 기본 점(•)이 이모지로 보이는 문제 방지
 	e.max_length = 64 if key != "nick" else AuthValidator.NICK_MAX
 	e.add_theme_font_size_override("font_size", 16)
 	e.add_theme_color_override("font_color", UIPalette.TEXT)

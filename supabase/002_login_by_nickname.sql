@@ -46,3 +46,37 @@ end;
 $$;
 revoke all on function public.login_email(text, text) from public;
 grant execute on function public.login_email(text, text) to anon, authenticated;
+
+-- 9) 비밀번호 재설정: 아이디(닉네임)와 이메일이 같은 회원일 때만 메일을 보내도록 확인 ----------
+-- 5분 안에 같은 아이디로 5번 불일치하면 잠시 막는다(추측 시도 제한). login_failures 표는 8) 에서 만든다.
+create or replace function public.reset_email_matches(p_nick text, p_email text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  fails int;
+  matched boolean;
+begin
+  if p_nick is null or p_email is null then
+    return false;
+  end if;
+  select count(*) into fails from public.login_failures
+   where nick = 'reset:' || lower(p_nick) and at > now() - interval '5 minutes';
+  if fails >= 5 then
+    return false;
+  end if;
+  select exists (
+    select 1 from public.profiles p
+    join auth.users u on u.id = p.id
+    where lower(p.nickname) = lower(p_nick) and lower(u.email) = lower(p_email)
+  ) into matched;
+  if not matched then
+    insert into public.login_failures (nick) values ('reset:' || lower(p_nick));
+  end if;
+  return matched;
+end;
+$$;
+revoke all on function public.reset_email_matches(text, text) from public;
+grant execute on function public.reset_email_matches(text, text) to anon, authenticated;

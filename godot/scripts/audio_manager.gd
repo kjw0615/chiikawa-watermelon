@@ -17,6 +17,7 @@ var bgm_muted := false
 var sfx_volume := 1.0
 var sfx_muted := false
 var silent := false   # 자체 테스트/헤드리스: 항상 무음, BGM 미재생, 설정 파일 미저장
+var bgm_on := false   # BGM 이 켜져 있어야 하는 상태(인게임)
 var _bgm: AudioStreamPlayer
 
 func _ready() -> void:
@@ -42,8 +43,19 @@ func _ready() -> void:
 		s.loop = true   # 끊김 없이 무한 반복
 		_bgm.stream = s
 	add_child(_bgm)
-	if not silent and _bgm.stream != null:
-		_bgm.play()   # 타이틀 화면부터 계속 재생(웹은 브라우저 정책상 첫 클릭 뒤에 들릴 수 있음)
+	# BGM 은 타이틀에서는 꺼 두고, 인게임이 시작될 때 main 이 play_bgm() 으로 켠다
+
+## 인게임 시작: 처음부터 무한 루프 재생(자체 테스트는 무음이라 실제 재생은 안 하고 bgm_on 만 기록)
+func play_bgm() -> void:
+	bgm_on = true
+	if not silent and _bgm != null and _bgm.stream != null:
+		_bgm.play()
+
+## 메인(타이틀) 복귀: BGM 끄기
+func stop_bgm() -> void:
+	bgm_on = false
+	if _bgm != null:
+		_bgm.stop()
 
 func is_bgm_playing() -> bool:
 	return _bgm != null and _bgm.playing
