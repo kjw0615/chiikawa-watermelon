@@ -1,0 +1,56 @@
+[
+  {
+    "file": "godot/assets/effects/fountain/water_column.png",
+    "size": [
+      512,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "visible_bounds_alpha_gt32": [
+      107,
+      136,
+      402,
+      935
+    ],
+    "sha256": "3a8b783e8750bb615fc8e55f01731307c344594f8f8d28a6c868ac2988bdc237"
+  },
+  {
+    "file": "godot/assets/effects/fountain/splash_cap.png",
+    "size": [
+      1024,
+      512
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "visible_bounds_alpha_gt32": [
+      33,
+      77,
+      992,
+      476
+    ],
+    "sha256": "2dfd399ff2d2243e21b3442f6eda22e848706b5c0075511ca0f1442942163b73"
+  },
+  {
+    "file": "godot/assets/effects/fountain/fountain_combined.png",
+    "size": [
+      512,
+      768
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "visible_bounds_alpha_gt32": [
+      31,
+      100,
+      481,
+      583
+    ],
+    "sha256": "3eb11d9ae5bac55892e3711840c70749ee68f7d93c1e6d01ba250e001f0a565d"
+  }
+]
