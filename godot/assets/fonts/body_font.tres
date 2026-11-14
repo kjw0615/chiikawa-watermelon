@@ -1,8 +1,10 @@
-[gd_resource type="FontVariation" load_steps=3 format=3]
+[gd_resource type="FontVariation" load_steps=4 format=3]
 
 [ext_resource type="FontFile" path="res://assets/fonts/Ttukttak-subset.ttf" id="1"]
 [ext_resource type="FontFile" path="res://assets/fonts/GowunDodum-subset.ttf" id="2"]
 
+[ext_resource type="FontFile" path="res://assets/fonts/HakgyoansimDunggeunmiso-subset.ttf" id="3"]
+
 [resource]
 base_font = ExtResource("1")
-fallbacks = [ExtResource("2")]
+fallbacks = [ExtResource("2"), ExtResource("3")]

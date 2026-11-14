@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "created": "2026-11-13",
+  "mode": "built-in image_gen",
+  "branch": "feat/codex-11nodes-draft",
+  "status": "draft_pending_user_review",
+  "game_applied": false,
+  "nodes": [
+    {
+      "stage": 1,
+      "key": "h",
+      "id": "chiikawa",
+      "name": "치이카와",
+      "file": "heads/node01_h_chiikawa.png",
+      "legacy": "legacy_web/img/h.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/7828ba38-8302-4215-b4e9-2873c2a27ecc/characters+chiikawa+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Chiikawa (ちいかわ). Very wide white rounded cheek silhouette, TWO tiny ROUND ears (NOT pointed), small shiny BLACK round eyes with tiny white glints well spaced in lower half of face, short delicate arched eyebrows, tiny minimalist w-shaped mouth with little chin dash, pink oval cheeks with THREE short diagonal dark hatch marks each. No projecting animal nose or muzzle.",
+      "generated_source_filename": "exec-360b498a-fe25-4d30-a1bc-6d96a6c315f9.png",
+      "review_focus": "작은 둥근 귀·흰 넓은 볼·작은 눈/입·분홍 빗금 볼",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 2,
+      "key": "g",
+      "id": "hachiware",
+      "name": "하치와레",
+      "file": "heads/node02_g_hachiware.png",
+      "legacy": "legacy_web/img/g.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/fd996c1c-d3d0-401a-8000-505f6d6dc1e7/characters+Hachiware+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Hachiware (ハチワレ). White broad cheek head, two SHORT triangular pointed blue ears. Muted powder BLUE cap over top and ears with distinctive white central V-shaped parted blaze. Small BLACK round shiny eyes, short eyebrows, tiny open happy catlike mouth with tiny pink tongue, pink oval cheeks with THREE diagonal hatch lines. NO projecting black button nose, whiskers or realistic muzzle.",
+      "generated_source_filename": "exec-2bfad4ac-fe85-434d-90be-8a59c4045e14.png",
+      "review_focus": "짧은 삼각 귀·가운데 갈라진 하늘색 정수리·흰 이마",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 3,
+      "key": "i",
+      "id": "usagi",
+      "name": "우사기",
+      "file": "heads/node03_i_usagi.png",
+      "legacy": "legacy_web/img/i.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/5e8cf75b-774f-49b6-9765-2c3bd74f0443/characters+USAGI+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Usagi (うさぎ) from Chiikawa, identity fidelity is CRITICAL. Pale buttery yellow VERY WIDE and low round head, TWO long NARROW upright parallel ears, closely spaced at center top, with slim pink interiors and rounded tips. DISTINCTIVE TWO LONG sweeping inward-facing eyebrow/forehead arches running from the ear bases down toward above the eyes near each temple, as in reference. SMALL BLACK round eyes with little horizontal white glints, NOT elongated vertical plush eyes. Tiny handdrawn open w/Y-shaped mischievous smiling mouth with a pink lower tongue and small chin mark. NO separate large button nose, NO rabbit snout, NO buck teeth, NO whiskers. Pink oval cheek blush with exactly three thin dark diagonal hatch marks on each cheek. The actual reference character, not a generic bunny.",
+      "generated_source_filename": "exec-63dcf780-3738-4531-8d97-ca63f90e8b8a.png",
+      "review_focus": "가까이 붙은 긴 귀·긴 이마 곡선 두 개·작은 둥근 눈·작은 입/혀",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 4,
+      "key": "e",
+      "id": "momonga",
+      "name": "모몽가",
+      "file": "heads/node04_e_momonga.png",
+      "legacy": "legacy_web/img/e.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/f7a90781-cc8d-426e-816b-c88149b16fa3/characters+momonga+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Momonga (モモンガ). White cheek head with two LARGE rounded upright ears (broader than Chiikawa), sky-blue INNER ears, blue tiny round nose accent, fluffy triangular cheek tufts. Characteristic LARGE horizontally oval dark shiny eyes with horizontal white glints, tiny w smile. Pale pink cheek ovals with 3 diagonal hatch marks. Preserve confident cute expression. No tail or fur ball behind head.",
+      "generated_source_filename": "exec-7dafc5e4-5e1b-4053-ae6e-5014ce77089b.png",
+      "review_focus": "큰 둥근 귀·파란 귀 안쪽과 코·가로 눈·볼 털",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 5,
+      "key": "f",
+      "id": "kurimanju",
+      "name": "쿠리만쥬",
+      "file": "heads/node05_f_kurimanju.png",
+      "legacy": "legacy_web/img/f.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/1ea45c12-0030-4445-84ad-42929d6131a2/characters+kurimanu+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Kurimanju (くりまんじゅう). Low wide cream pale-tan head with distinctive smooth CHESTNUT BROWN oval cap across crown, tiny side ear bumps mostly hidden. Small black round eyes, little short vertical wrinkle marks between eyes/forehead and above the tiny mouth. Pink rounded triangular NOSE with 3 dark hatch strokes is a critical feature, pink cheek blush patches with diagonal hatch marks, tiny w smiling mouth with short chin dash. No eyebrows like Usagi, no cup or drink.",
+      "generated_source_filename": "exec-34369dff-82a3-4e5c-aa77-db3ae18f32f1.png",
+      "review_focus": "갈색 타원 정수리·미간 주름·분홍 빗금 코",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 6,
+      "key": "d",
+      "id": "furuhonya",
+      "name": "후루혼야",
+      "file": "heads/node06_d_furuhonya.png",
+      "legacy": "legacy_web/img/d.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/af853d3c-623a-445d-98a4-a36ad672598b/characters+furuhonya+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Furuhonya (古本屋, Kani). Soft pale PINK very round broad head with warm deeper pink thin band across upper forehead. Distinctive CRAB CLAW HEADBAND: TWO prominent pink upward crab pincers with a clear notch at each top, attached above crown. These are crab claws, NOT rabbit ears or ordinary round ears. Small round black shiny eyes matching legacy image, two tiny double-dash eyebrows, pink oval cheek blush with 3 diagonal hatch marks, tiny open smiling mouth with pink lower tongue. Headband remains part of silhouette. No book or clothing.",
+      "generated_source_filename": "exec-4b2cc7ae-52ff-4a1c-9ce0-992ec64efc64.png",
+      "review_focus": "분홍 머리와 머리띠·게 집게 두 개·짧은 눈썹",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 7,
+      "key": "j",
+      "id": "shisa",
+      "name": "시사",
+      "file": "heads/node07_j_shisa.png",
+      "legacy": "legacy_web/img/j.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/a0f42efa-deac-40cb-8eb3-f493ed15153a/characters+shisa+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Shisa (シーサー). Warm pale yellow/cream broad head, two small pointed curl-inside ears; distinctive raised ORANGE CURL eyebrows shaped like comma/heart curls above SMALL round black eyes. Orange scalloped curly MANE patches down BOTH sides of head, not a complete lion mane halo. Pink blush ovals with 3 dark hatches, tiny w mouth and small chin dash. Preserve original cheek width and orange details. No ramen bowl or limbs.",
+      "generated_source_filename": "exec-8fa6409f-8b11-468c-9140-5e9102db4696.png",
+      "review_focus": "주황색 말린 눈썹·양옆 곱슬 털·연노랑 머리",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 8,
+      "key": "b",
+      "id": "rakko",
+      "name": "랏코",
+      "file": "heads/node08_b_rakko.png",
+      "legacy": "legacy_web/img/b.png",
+      "official_page": "https://www.chiikawaofficial.com/characters",
+      "official_image": "https://images.squarespace-cdn.com/content/v1/6670add926f2a64cd00fb0e7/d96c699f-75d7-413a-8741-25eeeddc1807/characters++rakko+phonetic+and+name+copy.png",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL full-character identity reference. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions: sparse simple flat dark brown-black ink facial marks, tiny mouth and eyes exactly as reference; do not redesign as a generic stuffed animal. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. Subtle depth on ears/head, no furry texture, no photoreal animal nose. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Rakko (ラッコ). Pale ivory/tan wide rounded head. Distinctive FOUR-POINT angular STAR-SHAPED SCAR on viewer LEFT forehead. Very short evenly spaced DARK STUBBLE ticks around the crown and jaw perimeter. Small dark side ears, half-lidded shiny dark horizontally oval eyes, pink cheek blush with three fine diagonal hatches, tiny w mouth and small chin dash. A compact mature expression. No sword, cape, scarf or clothing.",
+      "generated_source_filename": "exec-adc12b6e-ad18-4b00-aac8-3a0b2cfd1aec.png",
+      "review_focus": "보는 쪽 왼쪽 별 모양 흉터·외곽의 짧은 털선·낮은 눈",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 9,
+      "key": "a",
+      "id": "anoko",
+      "name": "아노코",
+      "file": "heads/node09_a_anoko.png",
+      "legacy": "legacy_web/img/a.png",
+      "official_page": "https://chiikawamarket.jp/products/4589468450122",
+      "official_image": "https://chiikawamarket.jp/cdn/shop/products/000000000946_1.jpg?v=1655033774",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL character reference to verify the exact character. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. No furry photograph texture. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Anoko (あのこ), the WHITE horned monster shown in references. White broad fluffy head, two small round side/top ears with slight tufts, angular fluffy cheek tufts, ONE small orange teardrop-shaped forehead horn centered between eyebrows. Distinctive HUGE light cream/golden circular eyes with dark outlines and curled round pupils looking downward; NOT black shiny dot eyes. Small delicate brows, tiny w mouth with small pink tongue and a little chin mark. No all-over yellow fur, no pair of striped horns, no pink blush added.",
+      "generated_source_filename": "exec-192b4d6f-032c-46bd-9688-96a1eb0507bd.png",
+      "review_focus": "아노코: 흰 털·주황 이마뿔 1개·큰 고리눈과 말린 동공",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 10,
+      "key": "c",
+      "id": "dekatsuyo",
+      "name": "데카츠요",
+      "file": "heads/node10_c_dekatsuyo.png",
+      "legacy": "legacy_web/img/c.png",
+      "official_page": "https://chiikawamarket.jp/products/4582662944336",
+      "official_image": "https://chiikawamarket.jp/cdn/shop/files/4582662944336_1.jpg?v=1720661382",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL character reference to verify the exact character. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. No furry photograph texture. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Dekatsuyo (でかつよ), the YELLOW shaggy monster with white masklike face as in the references. TWO upright short curved white horns with black horizontal stripe rings (NOT ears), thick fluffy scalloped YELLOW fur halo around pale white face. Tall oval RED/PINK eyes with dark lower pupils, white bumpy cloud-shaped eyebrows. Dark brown triangular nose, wide mischievous black toothy grin with triangular white teeth, long pink tongue hanging from viewer RIGHT mouth corner. Preserve the yellow silhouette and horn shapes; keep fur halo as HEAD outline but no body or any black limbs. No forehead orange single horn.",
+      "generated_source_filename": "exec-8af8f2fe-7fe6-482a-a4de-ab95ffd4fbc7.png",
+      "review_focus": "데카츠요: 노란 털·줄무늬 뿔 2개·붉은 눈·치아·옆으로 나온 혀",
+      "status": "draft_pending_user_review",
+      "approved": false
+    },
+    {
+      "stage": 11,
+      "key": "k",
+      "id": "siren",
+      "name": "세이렌",
+      "file": "heads/node11_k_siren.png",
+      "legacy": "legacy_web/img/k.svg",
+      "official_page": "https://chiikawa.toho-movie.jp/atm/characters.html",
+      "official_image": "https://chiikawa.toho-movie.jp/atm/img/ch_siren.webp",
+      "input_roles": [
+        "legacy identity reference",
+        "official identity reference"
+      ],
+      "prompt": "Use case: stylized-concept. Asset type: USER-REVIEW DRAFT of one 2.5D node head, NOT approved game production art. Input image 1 is the project's legacy portrait for identity; input image 2 is an OFFICIAL character reference to verify the exact character. Draw ONLY the main character's HEAD (all ears, horns and attached head ornaments fully visible); ignore all body, props, text, neighboring characters and background from references. Preserve Nagano Chiikawa ORIGINAL facial drawing and silhouette proportions. Medium: shallow 2.5D sculpted matte head with restrained soft volume and upper-left lighting, clean crisp dark outer outline, facial features remain mostly FLAT decals. No furry photograph texture. Front orthographic view upright, single centered head, full silhouette within square frame with at least 8% padding, transparent alpha background. No background/floor/shadow outside silhouette, no title, text, labels, watermark, frame, body, shoulders, hands, tail, tools or food. Color and unique facial identifiers take priority over 3D realism. Subject: Siren (セイレーン). Head ONLY of the black-and-white mermaid creature, dog-hariko-inspired facial pattern. Wide pear-rounded WHITE face with BLACK cap and black side fur and TWO black broad round ears with muted red/pink scalloped ear insides. Deep central black hair lobe descending to mid forehead. Very large RED almond-oval eyes with thin dark outlines and small pale oval highlights, tiny brows; small w mouth with tiny fangs and chin curve; two whisker curves on each white cheek, no pink blush patches. Preserve the TWO tiny white mermaid companions perched atop head between ears as in legacy k.svg, including their small pink/red forehead crests; they are fixed head-top ornaments for this draft. ONLY these tiny attached companions may include miniature body details. Main creature has NO body, fish tail, hands, spoon, necklace, shoulders. Single main HEAD silhouette including attached ear and crown details.",
+      "generated_source_filename": "exec-506ffc02-6d1d-45f7-9304-01863419aba5.png",
+      "review_focus": "검은 정수리/귀·이마 무늬·붉은 눈·볼 수염선·머리 위 인어 둘",
+      "status": "draft_pending_user_review",
+      "approved": false
+    }
+  ]
+}

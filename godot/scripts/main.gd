@@ -71,6 +71,7 @@ var _auth_modal: AuthModal
 var _rank_modal: RankModal
 var _help_modal: HelpModal
 var _settings_modal: SettingsModal
+var _credit_modal: CreditModal
 var _confirm_modal: StartConfirmModal
 var _reset_modal: ResetModal
 var _leave_modal: LeaveConfirmModal
@@ -83,7 +84,7 @@ var _players: Array[AudioStreamPlayer] = []
 var _sfx_i := 0
 var _synth := {}   # 코드로 합성한 효과음(음식 분수)
 var _item_players := {}   # 아이템 효과음 전용 재생기(충돌음이 돌려쓰는 풀에 덮어씌워지지 않게 분리)
-const COLLISION_VOL := 0.65   # 충돌(contact/land) 효과음 기본 볼륨 배율
+const COLLISION_VOL := 0.32   # 충돌(contact/land) 효과음 기본 볼륨 배율
 var _auto := false
 var _sep_t := 0.0
 var separations := 0
@@ -146,12 +147,14 @@ func _ready() -> void:
 	_rank_modal = RankModal.new()
 	_confirm_modal = StartConfirmModal.new()
 	_leave_modal = LeaveConfirmModal.new()
+	_credit_modal = CreditModal.new()
 	_help_modal = HelpModal.new()   # 마지막에 만들어 다른 모달 위에 겹쳐 열린다
-	for m: UiModal in [_settings_modal, _auth_modal, _reset_modal, _rank_modal, _confirm_modal, _leave_modal, _help_modal]:
+	for m: UiModal in [_settings_modal, _auth_modal, _reset_modal, _rank_modal, _confirm_modal, _leave_modal, _credit_modal, _help_modal]:
 		add_child(m)
 		m.closed.connect(_sync_title_block)
 	_auth_modal.forgot_requested.connect(func(): _reset_modal.open(); _sync_title_block())
 	_settings_modal.help_requested.connect(func(): _help_modal.open())
+	_settings_modal.credit_requested.connect(func(): _credit_modal.open())
 	_leave_modal.confirmed.connect(_go_title)
 	_confirm_modal.start_chosen.connect(_start_game)
 	_confirm_modal.login_chosen.connect(func(): _auth_modal.open(); _sync_title_block())
@@ -211,7 +214,7 @@ func _make_title() -> void:
 
 func _sync_title_block() -> void:
 	if _title != null:
-		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open() or _settings_modal.is_open() or _confirm_modal.is_open() or _help_modal.is_open() or _reset_modal.is_open()
+		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open() or _settings_modal.is_open() or _confirm_modal.is_open() or _help_modal.is_open() or _reset_modal.is_open() or _credit_modal.is_open()
 
 ## 게임 중/게임오버/일시정지에서 메인(타이틀) 화면으로 복귀
 func _go_title() -> void:
@@ -925,7 +928,17 @@ func _run_title_test() -> void:
 	audio_ok = audio_ok and stream != null and stream.loop and Audio._bgm.bus == "BGM" and _players[0].bus == "SFX" and Audio.silent
 	_settings_modal.open()
 	audio_ok = audio_ok and _settings_modal.is_open()
+	_settings_modal.credit_requested.emit()
+	var credit_ok: bool = _credit_modal.is_open() and _credit_modal.box.get_child_count() > 10
+	_credit_modal.close()
 	_settings_modal.close()
+	var font_ok := true
+	for cp in range(0x3131, 0x318F):
+		font_ok = font_ok and (UIPalette.title_font().has_char(cp) and UIPalette.button_font().has_char(cp) and load("res://assets/fonts/body_font.tres").has_char(cp) or cp in [0x3164, 0x318F])
+	print("jamo U+3131~318E in all fonts (incl. fallback) %s ; default vol bgm/sfx %s/%s" % ["OK" if font_ok else "FAIL", Audio.bgm_volume, Audio.sfx_volume])
+	ok = ok and font_ok
+	print("credit modal opens from settings %s" % ["OK" if credit_ok else "FAIL"])
+	ok = ok and credit_ok
 	print("audio buses (BGM/SFX split, bgm loop stream, test silent) %s" % ["OK" if audio_ok else "FAIL"])
 	ok = ok and audio_ok
 	# 아이템 효과음(1~3번 mp3 + 4번 합성), BEST 규칙, 사이드바 별 글리프 제거, 비밀번호 칸 필터/눈 토글
@@ -937,7 +950,7 @@ func _run_title_test() -> void:
 	# 충돌음이 쏟아져도 아이템 소리가 덮어씌워지지 않는지: 풀을 한 바퀴 이상 돌린 뒤에도 아이템 재생기 스트림 유지
 	for i in 20:
 		_play("contact", 0.5)
-	snd_ok = snd_ok and _item_players["shake"].stream == SFX["item_shake"] and not _players.has(_item_players["shake"]) and COLLISION_VOL < 1.0 and COLLISION_VOL >= 0.6
+	snd_ok = snd_ok and _item_players["shake"].stream == SFX["item_shake"] and not _players.has(_item_players["shake"]) and COLLISION_VOL < 1.0 and COLLISION_VOL >= 0.3
 	score = 500
 	_update_hud()
 	var guest_best: String = _panel._best_label.text
@@ -1091,7 +1104,7 @@ func _run_text_audit() -> void:
 	_rank_modal._show_rows(sample)
 	_rank_modal._mine.text = "열두글자열두글자열두글자님의 최고점: 99999999"
 	_auth_modal._set_mode(true)
-	for item in [_panel, _skill_bar, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box, _leave_modal.box]:
+	for item in [_panel, _skill_bar, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box, _leave_modal.box, _credit_modal.box]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]
 	_auth_modal._set_mode(false)   # 로그인 탭(아이디 + 비밀번호 + 비밀번호 찾기)도 점검

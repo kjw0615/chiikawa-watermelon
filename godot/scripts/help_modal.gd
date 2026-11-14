@@ -22,7 +22,7 @@ func _init() -> void:
 func _build() -> void:
 	var y := 78.0
 	for t in RULES:
-		var l := make_label("• " + t, Vector2(30, y), Vector2(box_size.x - 60, 58), 15, UIPalette.TEXT)
+		var l := make_label("- " + t, Vector2(30, y), Vector2(box_size.x - 60, 58), 15, UIPalette.TEXT)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(l)
 		y += 62.0

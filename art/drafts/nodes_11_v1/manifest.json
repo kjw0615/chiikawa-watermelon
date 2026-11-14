@@ -1,0 +1,273 @@
+{
+  "status": "draft_pending_user_review",
+  "approved": false,
+  "game_applied": false,
+  "legacy_order": [
+    "h",
+    "g",
+    "i",
+    "e",
+    "f",
+    "d",
+    "j",
+    "b",
+    "a",
+    "c",
+    "k"
+  ],
+  "images": [
+    {
+      "stage": 1,
+      "key": "h",
+      "id": "chiikawa",
+      "file": "heads/node01_h_chiikawa.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        107,
+        169,
+        1128,
+        1105
+      ],
+      "bytes": 1020354,
+      "sha256": "146b0cd21fd45ef7fd8ae3b6c949c77c990b1956813f322644efaa0d53a38736"
+    },
+    {
+      "stage": 2,
+      "key": "g",
+      "id": "hachiware",
+      "file": "heads/node02_g_hachiware.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        97,
+        160,
+        1150,
+        1155
+      ],
+      "bytes": 1162705,
+      "sha256": "0e8e0b3c669a3d7ac8064422b52b3f2e4cdabb1f4452f880343ac25dcdea6e1b"
+    },
+    {
+      "stage": 3,
+      "key": "i",
+      "id": "usagi",
+      "file": "heads/node03_i_usagi.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        158,
+        72,
+        1093,
+        1189
+      ],
+      "bytes": 942120,
+      "sha256": "2dd6c2c198ceafe1f5d26131da79df0daf2d4e9a215cb512cffb5c3cbe456b97"
+    },
+    {
+      "stage": 4,
+      "key": "e",
+      "id": "momonga",
+      "file": "heads/node04_e_momonga.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        97,
+        142,
+        1150,
+        1156
+      ],
+      "bytes": 1138936,
+      "sha256": "2a1c983ac21452b6009ca59c359e703b1ad8e86054b31127d2c7bd5e5cfc2743"
+    },
+    {
+      "stage": 5,
+      "key": "f",
+      "id": "kurimanju",
+      "file": "heads/node05_f_kurimanju.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        121,
+        205,
+        1121,
+        1108
+      ],
+      "bytes": 1043180,
+      "sha256": "7eb359a40be29b806091ce810f06e08e66e27318aa64d6483720df2515929e4a"
+    },
+    {
+      "stage": 6,
+      "key": "d",
+      "id": "furuhonya",
+      "file": "heads/node06_d_furuhonya.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        181,
+        160,
+        1054,
+        1139
+      ],
+      "bytes": 996112,
+      "sha256": "15588dcbbc179a7db0c81740c7a1bcd7585857d2b9427e37a74a48f1e5c36b06"
+    },
+    {
+      "stage": 7,
+      "key": "j",
+      "id": "shisa",
+      "file": "heads/node07_j_shisa.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        63,
+        203,
+        1189,
+        1082
+      ],
+      "bytes": 1113250,
+      "sha256": "79205d5e819664262ab20c4cbea1b5a63c2c0269118746c78b92a11894d39485"
+    },
+    {
+      "stage": 8,
+      "key": "b",
+      "id": "rakko",
+      "file": "heads/node08_b_rakko.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        95,
+        170,
+        1153,
+        1123
+      ],
+      "bytes": 1204751,
+      "sha256": "0e00817401611dfb3321f37432560b65345d7e92b3dfa3954f1cec301ad059ad"
+    },
+    {
+      "stage": 9,
+      "key": "a",
+      "id": "anoko",
+      "file": "heads/node09_a_anoko.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        79,
+        162,
+        1168,
+        1049
+      ],
+      "bytes": 1098147,
+      "sha256": "0c0e44423c24ebaced28c41b22690e9a8bcc2acbefb20409b059dffb46e4ec8a"
+    },
+    {
+      "stage": 10,
+      "key": "c",
+      "id": "dekatsuyo",
+      "file": "heads/node10_c_dekatsuyo.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        96,
+        135,
+        1156,
+        1143
+      ],
+      "bytes": 1318876,
+      "sha256": "3b60aceeb842bc90b71f2d01f16f79c42ca0ffe4f14ceab74ddf4b7c8d25cd49"
+    },
+    {
+      "stage": 11,
+      "key": "k",
+      "id": "siren",
+      "file": "heads/node11_k_siren.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "bbox_alpha_128": [
+        129,
+        122,
+        1119,
+        1158
+      ],
+      "bytes": 1241314,
+      "sha256": "c55558dd599bcdac989302ee471511ebab34846d2a8488556a3f20b87958ded4"
+    }
+  ]
+}

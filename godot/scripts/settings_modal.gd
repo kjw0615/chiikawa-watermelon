@@ -1,8 +1,9 @@
 class_name SettingsModal
 extends UiModal
-## 설정 모달(타이틀 화면의 톱니바퀴): BGM/SFX 볼륨 + 음소거, 게임 설명, 크레딧(자리만), 로그아웃.
+## 설정 모달(타이틀 화면의 톱니바퀴): BGM/SFX 볼륨 + 음소거, 게임 설명, 크레딧, 로그아웃.
 
 signal help_requested
+signal credit_requested
 
 var _logout: Button
 var _account: Label
@@ -32,8 +33,8 @@ func _build() -> void:
 	var help := make_button("게임 설명", Vector2(80, 262), Vector2(300, 50), UIPalette.PINK_STATES, 20)
 	help.pressed.connect(func(): help_requested.emit())
 	box.add_child(help)
-	var credit := make_button("크레딧 (준비 중)", Vector2(80, 322), Vector2(300, 50), [UIPalette.PAPER, UIPalette.CREAM, UIPalette.DIVIDER], 20)
-	credit.disabled = true   # 나중에 크레딧 팝업을 연결할 자리(출처 문서: 전달사항/크레딧_출처_정보.md)
+	var credit := make_button("크레딧", Vector2(80, 322), Vector2(300, 50), UIPalette.PINK_STATES, 20)
+	credit.pressed.connect(func(): credit_requested.emit())
 	box.add_child(credit)
 	_account = make_label("", Vector2(30, 388), Vector2(box_size.x - 60, 22), 15, UIPalette.TEXT_MUTED, true)
 	box.add_child(_account)

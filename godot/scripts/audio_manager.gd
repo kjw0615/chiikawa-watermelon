@@ -12,9 +12,9 @@ const SAVE_PATH := "user://settings.cfg"   # [audio] volume/muted = SFX, bgm_vol
 const BGM_STREAM := "res://audio/bgm.mp3"
 const TEST_FLAGS := ["--shot", "--verify", "--title-test", "--text-audit", "--net-test"]
 
-var bgm_volume := 0.6
+var bgm_volume := 0.5
 var bgm_muted := false
-var sfx_volume := 1.0
+var sfx_volume := 0.5
 var sfx_muted := false
 var silent := false   # 자체 테스트/헤드리스: 항상 무음, BGM 미재생, 설정 파일 미저장
 var bgm_on := false   # BGM 이 켜져 있어야 하는 상태(인게임)
@@ -30,7 +30,7 @@ func _ready() -> void:
 	if not silent:
 		var cf := ConfigFile.new()
 		if cf.load(SAVE_PATH) == OK:
-			sfx_volume = clampf(float(cf.get_value("audio", "volume", 1.0)), 0.0, 1.0)
+			sfx_volume = clampf(float(cf.get_value("audio", "volume", sfx_volume)), 0.0, 1.0)
 			sfx_muted = bool(cf.get_value("audio", "muted", false))
 			bgm_volume = clampf(float(cf.get_value("audio", "bgm_volume", bgm_volume)), 0.0, 1.0)
 			bgm_muted = bool(cf.get_value("audio", "bgm_muted", false))
