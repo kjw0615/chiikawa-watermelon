@@ -5,7 +5,7 @@ extends Control
 signal start_pressed
 signal rank_pressed
 signal login_pressed
-signal logout_pressed
+signal settings_pressed
 
 const TITLE_KO := "먼작귀 데굴데굴 섬"
 const TITLE_EN := "Chiikawa Tumble Island"
@@ -81,8 +81,22 @@ func _ready() -> void:
 	rank_button.pressed.connect(func(): rank_pressed.emit())
 	add_child(rank_button)
 	account_button = _small_button("로그인 / 회원가입", Vector2(size.x / 2.0 + 10.0, 584), [UIPalette.PAPER, UIPalette.CREAM, UIPalette.DIVIDER])
-	account_button.pressed.connect(func(): logout_pressed.emit() if Supabase.signed_in else login_pressed.emit())
+	account_button.pressed.connect(func(): login_pressed.emit())
 	add_child(account_button)
+	# 설정(톱니바퀴) 버튼: 우측 상단
+	var gear := Button.new()
+	gear.position = Vector2(size.x - 64.0, 16.0)
+	gear.size = Vector2(48, 48)
+	gear.focus_mode = Control.FOCUS_NONE
+	gear.tooltip_text = "설정"
+	UIPalette.style_button(gear, [UIPalette.PAPER, UIPalette.CREAM, UIPalette.DIVIDER], 24)
+	var gi := Control.new()
+	gi.size = gear.size
+	gi.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gi.draw.connect(func(): _draw_gear(gi))
+	gear.add_child(gi)
+	gear.pressed.connect(func(): settings_pressed.emit())
+	add_child(gear)
 	Supabase.auth_changed.connect(_refresh_account)
 	_refresh_account()
 
@@ -136,12 +150,22 @@ func _add_title() -> void:
 	add_child(sub)
 
 func _refresh_account() -> void:
-	if Supabase.signed_in:
-		_account_label.text = "%s님, 환영해요!" % Supabase.nickname
-		account_button.text = "로그아웃"
-	else:
-		_account_label.text = ""
-		account_button.text = "로그인 / 회원가입"
+	# 로그인 상태: 환영 문구 + 랭킹 버튼만(로그아웃은 설정 안), 비로그인: 랭킹 + 로그인/회원가입
+	var signed := Supabase.signed_in
+	_account_label.text = "%s님, 환영해요!" % Supabase.nickname if signed else ""
+	account_button.visible = not signed
+	rank_button.position.x = (size.x - 150.0) / 2.0 if signed else size.x / 2.0 - 160.0
+
+## 톱니바퀴 아이콘(글꼴에 ⚙ 가 없어서 도형으로 그림)
+func _draw_gear(c: Control) -> void:
+	var ctr := c.size / 2.0
+	var col := UIPalette.BLUE_INK
+	for i in 8:
+		var a := TAU * i / 8.0
+		var dir := Vector2.from_angle(a)
+		c.draw_line(ctr + dir * 11.0, ctr + dir * 17.0, col, 5.0)
+	c.draw_circle(ctr, 13.0, col)
+	c.draw_circle(ctr, 5.5, UIPalette.PAPER)
 
 func _small_button(t: String, pos: Vector2, states: Array) -> Button:
 	var b := Button.new()

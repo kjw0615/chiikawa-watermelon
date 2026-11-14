@@ -23,8 +23,8 @@ func _ready() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(dim)
 	var box := Panel.new()
-	box.size = Vector2(320, 240)
-	box.position = Vector2(240, 280)
+	box.size = Vector2(440, 400)
+	box.position = Vector2(180, 200)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UIPalette.CREAM
 	sb.border_color = UIPalette.BORDER
@@ -38,16 +38,28 @@ func _ready() -> void:
 	t.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
 	t.text = "일시정지 (PAUSE)"
 	t.position = Vector2(0, 26)
-	t.size = Vector2(320, 44)
+	t.size = Vector2(440, 44)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_font_override("font", UIPalette.title_font())
 	t.add_theme_font_size_override("font_size", 30)
 	t.add_theme_color_override("font_color", UIPalette.TEXT)
 	box.add_child(t)
-	resume_button = _button("계속하기", Vector2(60, 92), [UIPalette.PINK, UIPalette.PINK_HOVER, UIPalette.PINK_PRESSED])
+	# 게임 중 언제든 두 볼륨을 조절: BGM / SFX(효과음)
+	var bgm_row := VolumeRow.new("bgm", "BGM")
+	bgm_row.position = Vector2(20, 88)
+	box.add_child(bgm_row)
+	var sfx_row := VolumeRow.new("sfx", "효과음")
+	sfx_row.position = Vector2(20, 138)
+	box.add_child(sfx_row)
+	var div := ColorRect.new()
+	div.color = UIPalette.DIVIDER
+	div.position = Vector2(30, 196)
+	div.size = Vector2(380, 2)
+	box.add_child(div)
+	resume_button = _button("계속하기", Vector2(120, 216), [UIPalette.PINK, UIPalette.PINK_HOVER, UIPalette.PINK_PRESSED])
 	resume_button.pressed.connect(resume)
 	box.add_child(resume_button)
-	quit_button = _button("메인으로", Vector2(60, 160), UIPalette.QUIT_BG)
+	quit_button = _button("메인으로", Vector2(120, 290), UIPalette.QUIT_BG)
 	quit_button.pressed.connect(func(): home_requested.emit())
 	box.add_child(quit_button)
 

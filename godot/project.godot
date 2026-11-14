@@ -10,6 +10,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 Supabase="*res://scripts/supabase_client.gd"
+Audio="*res://scripts/audio_manager.gd"
 
 [gui]
 

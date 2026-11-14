@@ -69,6 +69,8 @@ var _pause_menu: PauseMenu
 var _auth_modal: AuthModal
 var _rank_modal: RankModal
 var _help_modal: HelpModal
+var _settings_modal: SettingsModal
+var _confirm_modal: StartConfirmModal
 var _record_note := ""   # 게임오버 모달에 붙는 신기록/제출 결과 문구
 var _over_restart: Button
 var _over_quit: Button
@@ -112,6 +114,7 @@ func _ready() -> void:
 	_art_fg = _make_art(FG_ART, -50)   # 노드가 돌판/바위에 가려지지 않도록 노드(z=0) 뒤, 배경(-100) 앞
 	for i in 8:
 		var p := AudioStreamPlayer.new()
+		p.bus = Audio.BUS_SFX   # 모든 효과음은 SFX 버스
 		add_child(p)
 		_players.append(p)
 	_build_over_modal()
@@ -137,21 +140,24 @@ func _ready() -> void:
 	var cf := ConfigFile.new()
 	if cf.load(SAVE_PATH) == OK:
 		best = cf.get_value("game", "best", 0)
-		_muted = cf.get_value("audio", "muted", false)
-		_volume = clampf(float(cf.get_value("audio", "volume", 1.0)), 0.0, 1.0)
-	# 자체 테스트(--shot/--verify)는 항상 무음 + 설정 파일 미저장
-	_set_volume(_volume, false)
-	_set_muted(true if _auto else _muted, false)
+	# 볼륨/음소거 값은 Audio(autoload)가 관리(자체 테스트는 Audio 가 항상 무음 + 설정 파일 미저장)
+	Audio.changed.connect(_sync_audio_ui)
+	_sync_audio_ui()
 	_build_credit()
 	_pause_menu = PauseMenu.new()
 	add_child(_pause_menu)
 	_pause_menu.home_requested.connect(_go_title)
+	_settings_modal = SettingsModal.new()
 	_auth_modal = AuthModal.new()
 	_rank_modal = RankModal.new()
-	_help_modal = HelpModal.new()
-	for m: UiModal in [_auth_modal, _rank_modal, _help_modal]:
+	_confirm_modal = StartConfirmModal.new()
+	_help_modal = HelpModal.new()   # 마지막에 만들어 다른 모달 위에 겹쳐 열린다
+	for m: UiModal in [_settings_modal, _auth_modal, _rank_modal, _confirm_modal, _help_modal]:
 		add_child(m)
 		m.closed.connect(_sync_title_block)
+	_settings_modal.help_requested.connect(func(): _help_modal.open())
+	_confirm_modal.start_chosen.connect(_start_game)
+	_confirm_modal.login_chosen.connect(func(): _auth_modal.open(); _sync_title_block())
 	_panel.help_pressed.connect(_open_help)
 	Supabase.auth_changed.connect(_update_hud)
 	_new_game()
@@ -201,14 +207,14 @@ func _make_title() -> void:
 	_title = TitleScreen.new()
 	_title.size = Vector2(800, 800)
 	add_child(_title)
-	_title.start_pressed.connect(_start_game)
+	_title.start_pressed.connect(_on_start_pressed)
 	_title.rank_pressed.connect(func(): _rank_modal.open(); _sync_title_block())
 	_title.login_pressed.connect(func(): _auth_modal.open(); _sync_title_block())
-	_title.logout_pressed.connect(func(): Supabase.sign_out())
+	_title.settings_pressed.connect(func(): _settings_modal.open(); _sync_title_block())
 
 func _sync_title_block() -> void:
 	if _title != null:
-		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open()
+		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open() or _settings_modal.is_open() or _confirm_modal.is_open() or _help_modal.is_open()
 
 ## 게임 중/게임오버/일시정지에서 메인(타이틀) 화면으로 복귀
 func _go_title() -> void:
@@ -221,6 +227,16 @@ func _go_title() -> void:
 	_new_game()
 	if _title == null:
 		_make_title()
+
+## '게임 시작': 로그인 상태면 바로 시작, 비로그인이면 확인 팝업(시작하기 / 로그인하기)
+func _on_start_pressed() -> void:
+	if state != State.TITLE or _title == null or _title.blocked:
+		return
+	if Supabase.signed_in or not Supabase.enabled:
+		_start_game()
+	else:
+		_confirm_modal.open()
+		_sync_title_block()
 
 func _open_help() -> void:
 	if state == State.PLAYING and not over and not items.aiming and not _pause_menu.is_open():
@@ -369,7 +385,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			get_tree().quit()    # 타이틀/게임오버에서는 ESC 로 종료
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
-		_set_muted(not _muted)
+		Audio.set_sfx_muted(not Audio.sfx_muted)
 	elif state != State.PLAYING:
 		return
 	elif e is InputEventKey and e.pressed and e.keycode == KEY_R:
@@ -449,22 +465,15 @@ func _merge(a: Head, b: Head) -> void:
 		_save_cfg()
 	_update_hud()
 
-func _set_muted(m: bool, save := true) -> void:
-	_muted = m
-	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), m)
-	_mute_btn.set_pressed_no_signal(m)
+## 인게임 우측 하단 슬라이더/스피커 = SFX(효과음) 조절. 다른 곳(설정/일시정지)에서 바꿔도 여기에 반영
+func _sync_audio_ui() -> void:
+	_muted = Audio.sfx_muted
+	_volume = Audio.sfx_volume
+	_mute_btn.set_pressed_no_signal(_muted)
 	_speaker.queue_redraw()
-	_vol_slider.editable = not m
-	if save and not _auto:
-		_save_cfg()
-
-func _set_volume(v: float, save := true) -> void:
-	_volume = clampf(v, 0.0, 1.0)
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(maxf(_volume, 0.0001)))
+	_vol_slider.editable = not _muted
 	_vol_slider.set_value_no_signal(_volume)
 	_vol_label.text = "%d%%" % roundi(_volume * 100.0)
-	if save and not _auto:
-		_save_cfg()
 
 ## 우측 하단 사운드 UI: 음소거 토글 + 볼륨 슬라이더
 ## 게임오버 팝업: 다시하기 / 종료하기
@@ -551,7 +560,7 @@ func _build_audio_ui() -> void:
 	_mute_btn.toggle_mode = true
 	_mute_btn.focus_mode = Control.FOCUS_NONE   # 스페이스/엔터로 눌리지 않게
 	_mute_btn.flat = true
-	_mute_btn.tooltip_text = "음소거 (M)"
+	_mute_btn.tooltip_text = "효과음 음소거 (M)"
 	_mute_btn.position = Vector2(8, 14)
 	_mute_btn.size = Vector2(36, 36)
 	_speaker = Control.new()
@@ -559,7 +568,7 @@ func _build_audio_ui() -> void:
 	_speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_speaker.draw.connect(_draw_speaker)
 	_mute_btn.add_child(_speaker)
-	_mute_btn.toggled.connect(func(on: bool): _set_muted(on))
+	_mute_btn.toggled.connect(func(on: bool): Audio.set_sfx_muted(on))
 	box.add_child(_mute_btn)
 
 	_vol_label = Label.new()
@@ -594,8 +603,8 @@ func _build_audio_ui() -> void:
 	_vol_slider.add_theme_stylebox_override("slider", track)
 	_vol_slider.add_theme_stylebox_override("grabber_area", fill)
 	_vol_slider.add_theme_stylebox_override("grabber_area_highlight", fill)
-	_vol_slider.value_changed.connect(func(v: float): _set_volume(v, false))   # 실시간 반영
-	_vol_slider.drag_ended.connect(func(_changed: bool): _save_cfg())          # 놓을 때 저장
+	_vol_slider.value_changed.connect(func(v: float): Audio.set_sfx_volume(v, false))   # 실시간 반영
+	_vol_slider.drag_ended.connect(func(_changed: bool): Audio.save_settings())         # 놓을 때 저장
 	box.add_child(_vol_slider)
 
 func _save_cfg() -> void:
@@ -604,8 +613,6 @@ func _save_cfg() -> void:
 	var cf := ConfigFile.new()
 	cf.load(SAVE_PATH)
 	cf.set_value("game", "best", best)
-	cf.set_value("audio", "muted", _muted)
-	cf.set_value("audio", "volume", _volume)
 	cf.save(SAVE_PATH)
 
 ## 끼임 안전장치: 서로 콜라이더가 깊게 겹친 쌍을 찾아 겹친 깊이만큼 중심 반대 방향으로 위치를 보정하고 살짝 밀어 분리
@@ -964,6 +971,45 @@ func _run_title_test() -> void:
 	home_ok = home_ok and state == State.TITLE and _title != null and not _pause_menu.is_open() and not get_tree().paused
 	print("back to title (over modal, pause menu): %s" % ["OK" if home_ok else "FAIL"])
 	ok = ok and home_ok
+	# 시작 버튼: 비로그인이면 확인 팝업(시작하기/로그인하기), 로그인이면 즉시 시작
+	var was_enabled := Supabase.enabled
+	Supabase.enabled = true   # 오프라인 테스트에서도 비로그인 경로를 검증(네트워크 호출 없음)
+	_title.start_button.pressed.emit()
+	var c1 := _confirm_modal.is_open() and state == State.TITLE and _title.blocked
+	_confirm_modal.login_button.pressed.emit()
+	var c2 := not _confirm_modal.is_open() and _auth_modal.is_open() and state == State.TITLE
+	_auth_modal.close()
+	_title.start_button.pressed.emit()
+	_confirm_modal.start_button.pressed.emit()
+	await get_tree().create_timer(0.1).timeout
+	var c3 := state == State.PLAYING
+	_go_title()
+	Supabase.signed_in = true
+	_title.start_button.pressed.emit()
+	var c4 := state == State.PLAYING and not _confirm_modal.is_open()
+	Supabase.signed_in = false
+	Supabase.enabled = was_enabled
+	_go_title()
+	var confirm_ok := c1 and c2 and c3 and c4
+	print("start confirm (guest popup %s, login btn %s, guest start %s, signed-in direct %s) %s" % [c1, c2, c3, c4, "OK" if confirm_ok else "FAIL"])
+	ok = ok and confirm_ok
+	# 오디오: BGM/SFX 버스 분리, 슬라이더=SFX, BGM 루프 스트림, 설정 모달
+	var bgm_i := AudioServer.get_bus_index("BGM")
+	var sfx_i := AudioServer.get_bus_index("SFX")
+	Audio.set_bgm_volume(0.25, false)
+	Audio.set_sfx_volume(0.5, false)
+	_vol_slider.value = 0.8   # 인게임 슬라이더는 SFX 를 움직인다
+	var audio_ok := bgm_i > 0 and sfx_i > 0 and is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(bgm_i)), 0.25) and is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(sfx_i)), 0.8)
+	Audio.set_bgm_muted(true, false)
+	audio_ok = audio_ok and AudioServer.is_bus_mute(bgm_i) and not AudioServer.is_bus_mute(sfx_i)
+	Audio.set_bgm_muted(false, false)
+	var stream := Audio._bgm.stream as AudioStreamMP3
+	audio_ok = audio_ok and stream != null and stream.loop and Audio._bgm.bus == "BGM" and _players[0].bus == "SFX" and Audio.silent
+	_settings_modal.open()
+	audio_ok = audio_ok and _settings_modal.is_open()
+	_settings_modal.close()
+	print("audio buses (BGM/SFX split, in-game slider=SFX, bgm loop stream, test silent) %s" % ["OK" if audio_ok else "FAIL"])
+	ok = ok and audio_ok
 	# 로그인/회원가입 모달: 잘못된 입력은 서버 호출 없이 한국어 안내, 랭킹은 오프라인 안내
 	_auth_modal.open()
 	_auth_modal._set_mode(true)
@@ -1024,7 +1070,7 @@ func _run_text_audit() -> void:
 	_rank_modal._show_rows(sample)
 	_rank_modal._mine.text = "열두글자열두글자열두글자님의 최고점: 99999999"
 	_auth_modal._set_mode(true)
-	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box]:
+	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]
 	print("TEXT AUDIT checked=%d overflow=%d %s" % [n, bad, "PASS" if bad == 0 else "FAIL"])
