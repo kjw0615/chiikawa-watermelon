@@ -1,0 +1,17 @@
+{
+  "tool": "built-in image_gen",
+  "transparent_background": true,
+  "request": "Remove visible pink inner ears from rear-view Usagi icon and all six animation frames; use matching pale yellow fur.",
+  "jobs": [
+    {
+      "name": "icon",
+      "path": "godot/assets/icons/items_v1/item01_usagi_shake.png",
+      "prompt": "Use case: precise-object-edit. Edit target: supplied 128x128 transparent game icon of Usagi from behind with orange arrows. Change ONLY the pink inner-ear patches on BOTH ears to pale creamy yellow fur matching the head immediately below them. These are the BACK surfaces of ears: no pink, no inner-ear opening, no inset inner-ear outline. Preserve the exact ear silhouette and dark outer contour, highlights, white tail, body, legs, arrows, composition, placement, canvas framing and transparent background. Do not redesign or add details. Preserve original colors outside the ears. Return same square image with real transparency."
+    },
+    {
+      "name": "sheet",
+      "path": "godot/assets/effects/spritesheets/usagi_shake.png",
+      "prompt": "Use case: precise-object-edit. Edit target: supplied transparent Usagi rear-view six-frame animation sheet. Change ONLY the pink inner-ear patches in ALL TWELVE ears (two ears in each of six frames) to pale creamy yellow fur matching each frame's head color and soft shading. They are the BACK surfaces of ears, so no pink and no inner-ear holes or inset dark inner-ear lines should appear. Preserve every pose, outer ear silhouettes, dark outer contours, white tails, feet, highlights, frame placements and sprite scale exactly. Maintain THREE columns and TWO rows, six square cells, same 3:2 landscape framing, transparent gutters and transparent background. Do not shift any character, add/remove frames, or change any other body colors. Real transparent PNG."
+    }
+  ]
+}

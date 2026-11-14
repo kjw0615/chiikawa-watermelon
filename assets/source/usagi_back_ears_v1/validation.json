@@ -1,0 +1,65 @@
+[
+  {
+    "path": "godot/assets/icons/items_v1/item01_usagi_shake.png",
+    "size": [
+      128,
+      128
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "ear_color_check": [
+      {
+        "frame": 0,
+        "pink_before": 242,
+        "pink_after": 0
+      }
+    ],
+    "sha256": "a95dabf42fde55038740a741510258ce78ce7bc8d40de4ea39d0646ced1709e5"
+  },
+  {
+    "path": "godot/assets/effects/spritesheets/usagi_shake.png",
+    "size": [
+      768,
+      512
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "ear_color_check": [
+      {
+        "frame": 0,
+        "pink_before": 650,
+        "pink_after": 0
+      },
+      {
+        "frame": 1,
+        "pink_before": 698,
+        "pink_after": 0
+      },
+      {
+        "frame": 2,
+        "pink_before": 797,
+        "pink_after": 0
+      },
+      {
+        "frame": 3,
+        "pink_before": 648,
+        "pink_after": 0
+      },
+      {
+        "frame": 4,
+        "pink_before": 687,
+        "pink_after": 0
+      },
+      {
+        "frame": 5,
+        "pink_before": 728,
+        "pink_after": 0
+      }
+    ],
+    "sha256": "ed0c44c03481c01a35f886de3170c01416fa2991dc3deb72704c08b2a1cb6c11"
+  }
+]
