@@ -62,17 +62,34 @@ func sign_up(nick: String, email: String, password: String) -> Dictionary:
 		return {"ok": true, "message": "가입 완료! 환영해요, %s님." % nickname}
 	return {"ok": true, "message": "가입 완료! 인증 메일을 확인한 뒤 로그인해 주세요."}
 
-func sign_in(email: String, password: String) -> Dictionary:
-	var e := AuthValidator.email_error(email)
-	if e != "":
-		return {"ok": false, "error": e}
+## 아이디(닉네임) + 비밀번호로 로그인. 서버 RPC login_email 이 비밀번호까지 맞을 때만 이메일을 돌려주고, 그 이메일로 Supabase Auth 로그인한다
+func sign_in(nick: String, password: String) -> Dictionary:
+	if nick == "":
+		return {"ok": false, "error": "아이디를 입력해 주세요."}
 	if password == "":
 		return {"ok": false, "error": "비밀번호를 입력해 주세요."}
-	var r := await _auth_request("/auth/v1/token?grant_type=password", {"email": email, "password": password})
+	var lr := await _rpc("login_email", {"p_nick": nick, "p_password": password}, false)
+	if not lr["ok"]:
+		return lr
+	if not (lr["data"] is String) or lr["data"] == "":
+		return {"ok": false, "error": "아이디 또는 비밀번호가 맞지 않아요. (여러 번 틀렸다면 잠시 후 다시 시도해 주세요)"}
+	var r := await _auth_request("/auth/v1/token?grant_type=password", {"email": lr["data"], "password": password})
 	if not r["ok"]:
 		return r
 	await _on_session(r["data"])
 	return {"ok": true, "message": "%s님, 어서 와요!" % nickname}
+
+## 비밀번호 재설정 메일 발송(/auth/v1/recover). 서버는 가입 여부와 관계없이 성공으로 답하므로 이메일 존재 여부는 알려주지 않는다
+func send_password_reset(email: String) -> Dictionary:
+	var e := AuthValidator.email_error(email)
+	if e != "":
+		return {"ok": false, "error": e}
+	var r := await _auth_request("/auth/v1/recover", {"email": email})
+	if not r["ok"]:
+		if r.get("status", 0) == 429:
+			r["error"] = "메일을 너무 자주 보냈어요. 잠시 후 다시 시도해 주세요."
+		return r
+	return {"ok": true, "message": "등록된 이메일로 비밀번호 재설정 링크를 보냈어요! 메일이 안 보이면 스팸함도 확인해 주세요."}
 
 func sign_out() -> void:
 	if enabled and _access != "":

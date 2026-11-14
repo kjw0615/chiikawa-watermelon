@@ -11,6 +11,9 @@ var _fields: Dictionary = {}   # key -> {cap: Label, edit: LineEdit}
 var _msg: Label
 var _submit: Button
 var _busy := false
+var _forgot: Button
+
+signal forgot_requested   # 비밀번호 재설정 모달 열기
 
 func _init() -> void:
 	title_text = "로그인 / 회원가입"
@@ -23,13 +26,24 @@ func _build() -> void:
 	_tab_signup = make_button("회원가입", Vector2(250, 76), Vector2(190, 40), UIPalette.PINK_STATES, 20)
 	_tab_signup.pressed.connect(func(): _set_mode(true))
 	box.add_child(_tab_signup)
-	_add_field("nick", "아이디 (한글·영문·숫자·-, 2~12자)", false)
+	_add_field("nick", "아이디", false)
 	_add_field("email", "이메일 (비밀번호 재설정용)", false)
 	_add_field("pw", "비밀번호 (8자 이상, 영문+숫자)", true)
 	_add_field("pw2", "비밀번호 확인", true)
 	_msg = make_label("", Vector2(40, 0), Vector2(box_size.x - 80, 40), 14, ERROR_COL, true)
 	_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_msg)
+	_forgot = Button.new()
+	_forgot.text = "비밀번호를 잊으셨나요?"
+	_forgot.flat = true
+	_forgot.focus_mode = Control.FOCUS_NONE
+	_forgot.size = Vector2(220, 30)
+	_forgot.add_theme_font_override("font", UIPalette.button_font())
+	_forgot.add_theme_font_size_override("font_size", 15)
+	for c in ["font_color", "font_hover_color", "font_pressed_color"]:
+		_forgot.add_theme_color_override(c, UIPalette.BLUE_INK)
+	_forgot.pressed.connect(func(): forgot_requested.emit())
+	box.add_child(_forgot)
 	_submit = make_button("로그인", Vector2(110, box_size.y - 72), Vector2(260, 52), UIPalette.PINK_STATES, 22)
 	_submit.pressed.connect(_on_submit)
 	box.add_child(_submit)
@@ -66,7 +80,8 @@ func _set_mode(is_signup: bool) -> void:
 	var tab_off := [UIPalette.PAPER, UIPalette.CREAM, UIPalette.DIVIDER]
 	UIPalette.style_button(_tab_login, tab_off if is_signup else tab_on)
 	UIPalette.style_button(_tab_signup, tab_on if is_signup else tab_off)
-	var keys := ["nick", "email", "pw", "pw2"] if is_signup else ["email", "pw"]
+	var keys := ["nick", "email", "pw", "pw2"] if is_signup else ["nick", "pw"]
+	(_fields["nick"]["cap"] as Label).text = "아이디 (한글·영문·숫자·-, 2~12자)" if is_signup else "아이디"
 	var y := 132.0
 	for k in ["nick", "email", "pw", "pw2"]:
 		var f: Dictionary = _fields[k]
@@ -78,6 +93,8 @@ func _set_mode(is_signup: bool) -> void:
 			(f["edit"] as LineEdit).position = Vector2(40, y + 22.0)
 			y += 68.0
 	_msg.position.y = y + 2.0
+	_forgot.visible = not is_signup
+	_forgot.position = Vector2((box_size.x - 220.0) / 2.0, y + 46.0)
 	_msg.text = ""
 	_submit.text = "가입하기" if is_signup else "로그인"
 
@@ -87,7 +104,7 @@ func _on_open() -> void:
 	for k in _fields:
 		(_fields[k]["edit"] as LineEdit).text = ""
 	_set_mode(false)
-	(_fields["email"]["edit"] as LineEdit).grab_focus()
+	(_fields["nick"]["edit"] as LineEdit).grab_focus()
 
 func _text(k: String) -> String:
 	return (_fields[k]["edit"] as LineEdit).text.strip_edges() if k != "pw" and k != "pw2" else (_fields[k]["edit"] as LineEdit).text
@@ -99,8 +116,9 @@ func _on_submit() -> void:
 	if signup:
 		err = AuthValidator.signup_error(_text("nick"), _text("email"), _text("pw"), _text("pw2"))
 	else:
-		err = AuthValidator.email_error(_text("email"))
-		if err == "" and _text("pw") == "":
+		if _text("nick") == "":
+			err = "아이디를 입력해 주세요."
+		elif _text("pw") == "":
 			err = "비밀번호를 입력해 주세요."
 	if err != "":
 		_show(err, true)
@@ -112,7 +130,7 @@ func _on_submit() -> void:
 	if signup:
 		r = await Supabase.sign_up(_text("nick"), _text("email"), _text("pw"))
 	else:
-		r = await Supabase.sign_in(_text("email"), _text("pw"))
+		r = await Supabase.sign_in(_text("nick"), _text("pw"))
 	_busy = false
 	_submit.disabled = false
 	if not is_open():

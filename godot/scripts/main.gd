@@ -71,6 +71,7 @@ var _rank_modal: RankModal
 var _help_modal: HelpModal
 var _settings_modal: SettingsModal
 var _confirm_modal: StartConfirmModal
+var _reset_modal: ResetModal
 var _record_note := ""   # 게임오버 모달에 붙는 신기록/제출 결과 문구
 var _over_restart: Button
 var _over_quit: Button
@@ -149,12 +150,14 @@ func _ready() -> void:
 	_pause_menu.home_requested.connect(_go_title)
 	_settings_modal = SettingsModal.new()
 	_auth_modal = AuthModal.new()
+	_reset_modal = ResetModal.new()   # 로그인 팝업 위에 열린다
 	_rank_modal = RankModal.new()
 	_confirm_modal = StartConfirmModal.new()
 	_help_modal = HelpModal.new()   # 마지막에 만들어 다른 모달 위에 겹쳐 열린다
-	for m: UiModal in [_settings_modal, _auth_modal, _rank_modal, _confirm_modal, _help_modal]:
+	for m: UiModal in [_settings_modal, _auth_modal, _reset_modal, _rank_modal, _confirm_modal, _help_modal]:
 		add_child(m)
 		m.closed.connect(_sync_title_block)
+	_auth_modal.forgot_requested.connect(func(): _reset_modal.open(); _sync_title_block())
 	_settings_modal.help_requested.connect(func(): _help_modal.open())
 	_confirm_modal.start_chosen.connect(_start_game)
 	_confirm_modal.login_chosen.connect(func(): _auth_modal.open(); _sync_title_block())
@@ -214,7 +217,7 @@ func _make_title() -> void:
 
 func _sync_title_block() -> void:
 	if _title != null:
-		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open() or _settings_modal.is_open() or _confirm_modal.is_open() or _help_modal.is_open()
+		_title.blocked = _auth_modal.is_open() or _rank_modal.is_open() or _settings_modal.is_open() or _confirm_modal.is_open() or _help_modal.is_open() or _reset_modal.is_open()
 
 ## 게임 중/게임오버/일시정지에서 메인(타이틀) 화면으로 복귀
 func _go_title() -> void:
@@ -1022,6 +1025,25 @@ func _run_title_test() -> void:
 	var msg2: String = _auth_modal._msg.text
 	var auth_ok := msg1.contains("2~12자") and msg2.contains("이메일 형식")
 	_auth_modal.close()
+	# 로그인(아이디+비밀번호) 폼 검증 + 비밀번호 재설정 폼 검증(서버 호출 없이 안내문만)
+	_auth_modal.open()
+	_auth_modal._set_mode(false)
+	await _auth_modal._on_submit()
+	var msg3: String = _auth_modal._msg.text
+	(_auth_modal._fields["nick"]["edit"] as LineEdit).text = "치이카와"
+	await _auth_modal._on_submit()
+	var msg4: String = _auth_modal._msg.text
+	var login_form_ok := msg3.contains("아이디를 입력") and msg4.contains("비밀번호를 입력") and not (_auth_modal._fields["email"]["edit"] as LineEdit).visible and _auth_modal._forgot.visible
+	_auth_modal._forgot.pressed.emit()
+	var reset_open := _reset_modal.is_open()
+	_reset_modal.email_edit.text = "bad"
+	await _reset_modal._on_send()
+	var msg5: String = _reset_modal._msg.text
+	var reset_ok := reset_open and msg5.contains("이메일 형식")
+	_reset_modal.close()
+	_auth_modal.close()
+	print("login form (nickname+password, forgot btn): '%s' / '%s' %s ; reset modal: '%s' %s" % [msg3, msg4, "OK" if login_form_ok else "FAIL", msg5, "OK" if reset_ok else "FAIL"])
+	ok = ok and login_form_ok and reset_ok
 	_rank_modal.open()
 	await get_tree().create_timer(0.2).timeout
 	var rank_ok := _rank_modal.is_open() and _rank_modal._status.text.contains("온라인")
@@ -1070,9 +1092,12 @@ func _run_text_audit() -> void:
 	_rank_modal._show_rows(sample)
 	_rank_modal._mine.text = "열두글자열두글자열두글자님의 최고점: 99999999"
 	_auth_modal._set_mode(true)
-	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box]:
+	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]
+	_auth_modal._set_mode(false)   # 로그인 탭(아이디 + 비밀번호 + 비밀번호 찾기)도 점검
+	r = _audit_tree(_auth_modal.box)
+	n += r[0]; bad += r[1]
 	print("TEXT AUDIT checked=%d overflow=%d %s" % [n, bad, "PASS" if bad == 0 else "FAIL"])
 	get_tree().quit()
 
@@ -1169,10 +1194,10 @@ func _run_net_test() -> void:
 	ok = ok and found
 	await Supabase.sign_out()
 	ok = ok and not Supabase.signed_in
-	var bad: Dictionary = await Supabase.sign_in(email, pw + "x")
+	var bad: Dictionary = await Supabase.sign_in(nick, pw + "x")
 	print("wrong password: ", bad.get("error"))
 	ok = ok and not bad["ok"]
-	var li: Dictionary = await Supabase.sign_in(email, pw)
+	var li: Dictionary = await Supabase.sign_in(nick, pw)
 	print("sign_in: ", li, " nickname=", Supabase.nickname, " best=", Supabase.server_best)
 	ok = ok and li["ok"] and Supabase.server_best == 2222
 	# 자동 로그인: 메모리 상태를 지우고 저장된 refresh_token 으로 복구되는지
