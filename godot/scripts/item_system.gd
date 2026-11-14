@@ -28,6 +28,7 @@ var fountain_big_rise := 0.0      # 8단계 이상 노드가 분수로 솟은 �
 var _big_rest := {}
 var fountain_peak_y := 9999.0   # 분수 중 노드가 도달한 가장 높은 y(검증용)
 var _particles: Node2D
+var _water: FountainFx   # 물기둥 + 물보라(음식 파티클 아래 레이어)
 
 func add_gauge_for_stage(stage_no: int) -> void:
 	gauge = minf(gauge + ItemDefs.gain_for_stage(stage_no), ItemDefs.gauge_max())
@@ -182,6 +183,12 @@ func _fountain() -> void:
 		_particles = _make_particles()
 		main.add_child(_particles)
 	_particles.position = Vector2((main.L + main.R) / 2.0, main.FLOOR_Y - 8.0)
+	if _water == null:
+		_water = FountainFx.new()
+		_water.z_index = 24
+		_water.column_height = main.FLOOR_Y - 8.0 - FOUNTAIN_CEIL_Y
+		main.add_child(_water)
+	_water.position = _particles.position
 	_set_fountain_emitting(true)
 	changed.emit()
 
@@ -189,7 +196,6 @@ func _make_particles() -> Node2D:
 	# 음식 9종을 각각 한 줄기 파티클로 뿜는 멀티 파티클 분수
 	var root := Node2D.new()
 	root.z_index = 25
-	root.add_child(_make_steam())
 	for i in 9:
 		var p := CPUParticles2D.new()
 		p.texture = load("res://assets/effects/food/food_%02d.png" % (i + 1))
@@ -215,48 +221,12 @@ func _make_particles() -> Node2D:
 		root.add_child(p)
 	return root
 
-## 분수 바닥에서 뭉게뭉게 피어오르는 하얀 증기(대형 노드 폭 150~200px, 음식 뒤쪽에 깔림)
-func _make_steam() -> CPUParticles2D:
-	var g := Gradient.new()
-	g.colors = PackedColorArray([Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.0)])
-	var gt := GradientTexture2D.new()
-	gt.gradient = g
-	gt.fill = GradientTexture2D.FILL_RADIAL
-	gt.fill_from = Vector2(0.5, 0.5)
-	gt.fill_to = Vector2(1.0, 0.5)
-	gt.width = 128
-	gt.height = 128
-	var p := CPUParticles2D.new()
-	p.z_index = -1
-	p.texture = gt
-	p.amount = 26
-	p.lifetime = 1.6
-	p.randomness = 0.5
-	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	p.emission_rect_extents = Vector2(70, 6)   # 약 140px + 퍼짐 = 150~200px 폭
-	p.direction = Vector2(0, -1)
-	p.spread = 14.0
-	p.initial_velocity_min = 90.0
-	p.initial_velocity_max = 170.0
-	p.gravity = Vector2(0, -40)
-	p.damping_min = 20.0
-	p.damping_max = 50.0
-	p.angular_velocity_min = -30.0
-	p.angular_velocity_max = 30.0
-	p.scale_amount_min = 0.7
-	p.scale_amount_max = 1.1
-	var sc := Curve.new()   # 피어오르며 커졌다가 사라진다
-	sc.add_point(Vector2(0, 0.5))
-	sc.add_point(Vector2(1, 1.4))
-	p.scale_amount_curve = sc
-	var col := Gradient.new()
-	col.colors = PackedColorArray([Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.0)])
-	col.offsets = PackedFloat32Array([0.0, 0.25, 1.0])
-	p.color_ramp = col
-	p.emitting = false
-	return p
-
 func _set_fountain_emitting(on: bool) -> void:
+	if _water != null:
+		if on:
+			_water.start()
+		else:
+			_water.stop()
 	for p in _particles.get_children():
 		(p as CPUParticles2D).emitting = on
 		if on:

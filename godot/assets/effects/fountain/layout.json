@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "type": "static_water_layers",
+  "parent_canvas_px": [256, 384],
+  "emitter_origin_px": [128, 292],
+  "layers": [
+    {"texture": "water_column.png", "source_size": [512, 1024], "display_size": [80, 240], "top_left": [88, 72], "sprite_center": [128, 192]},
+    {"texture": "splash_cap.png", "source_size": [1024, 512], "display_size": [240, 120], "top_left": [8, 32], "sprite_center": [128, 92]}
+  ],
+  "combined": {"texture": "fountain_combined.png", "source_size": [512, 768], "scale": 0.5},
+  "food_particles": "separate; existing food textures are unchanged",
+  "blend": "mix",
+  "note": "Descriptive placement data; not automatically imported into a scene."
+}
