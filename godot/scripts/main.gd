@@ -206,7 +206,7 @@ func _roll_next() -> void:
 	next_stage = _rnd_stage()
 	_show_held()
 
-## 교환권: 지금 손에 쥔(드롭 대기 중인) 노드를 다른 1~5단계 노드로 바꿈
+## 캐릭터 교체권: 지금 손에 쥔(드롭 대기 중인) 노드를 다른 1~5단계 노드로 바꿈
 func reroll_held() -> void:
 	var s := held_stage
 	var tries := 0

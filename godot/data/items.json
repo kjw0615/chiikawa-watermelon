@@ -8,7 +8,7 @@
   ],
   "items": [
     {"id": "shake",    "name": "엉덩이 흔들기", "full_name": "우사기 엉덩이 흔들기", "cost": 50,  "glyph": "흔", "icon": "res://assets/icons/items_v1/item01_usagi_shake.png"},
-    {"id": "swap",     "name": "교환권",       "full_name": "바자회의 교환권",     "cost": 30,  "glyph": "교", "icon": "res://assets/icons/items_v1/item02_bazaar_ticket.png"},
+    {"id": "swap",     "name": "캐릭터 교체권", "full_name": "바자회의 캐릭터 교체권",    "cost": 30,  "glyph": "교", "icon": "res://assets/icons/items_v1/item02_bazaar_ticket.png"},
     {"id": "sword",    "name": "명검 투하",     "full_name": "랏코의 명검 투하",     "cost": 100, "glyph": "검", "icon": "res://assets/icons/items_v1/item03_rakko_sword.png"},
     {"id": "fountain", "name": "음식 분수",     "full_name": "음식 분수",          "cost": 80,  "glyph": "분", "icon": "res://assets/icons/items_v1/item05_food_fountain.png"}
   ]

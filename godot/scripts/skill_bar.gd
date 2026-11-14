@@ -72,7 +72,8 @@ func _make_button(i: int, it: Dictionary) -> Button:
 		_parts[id] = {"glyph": gl}
 
 	var nm := _label(it["name"], Vector2(52, 6), Vector2(_btn_w() - 56.0, 30), 12, UIPalette.TEXT, false)
-	nm.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # 띄어쓰기 기준 2줄(엉덩이/흔들기)
+	nm.add_theme_constant_override("line_spacing", -2)
 	btn.add_child(nm)
 	var cost_label := _label("%d%%" % int(it["cost"]), Vector2(52, 36), Vector2(_btn_w() - 56.0, 18), 13, UIPalette.TEXT, false)
 	btn.add_child(cost_label)
