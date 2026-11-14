@@ -37,6 +37,7 @@ func _ready() -> void:
 	t.position = Vector2(0, 26)
 	t.size = Vector2(320, 44)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_font_override("font", UIPalette.title_font())
 	t.add_theme_font_size_override("font_size", 30)
 	t.add_theme_color_override("font_color", UIPalette.TEXT)
 	box.add_child(t)
@@ -69,6 +70,7 @@ func _button(text: String, pos: Vector2, states: Array) -> Button:
 	b.position = pos
 	b.size = Vector2(200, 54)
 	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", UIPalette.title_font())
 	b.add_theme_font_size_override("font_size", 22)
 	UIPalette.style_button(b, states)
 	return b

@@ -55,6 +55,7 @@ func _ready() -> void:
 	start_button.size = Vector2(280, 76)
 	start_button.position = Vector2((size.x - 280.0) / 2.0, 430.0)
 	start_button.focus_mode = Control.FOCUS_NONE
+	start_button.add_theme_font_override("font", UIPalette.title_font())
 	start_button.add_theme_font_size_override("font_size", 32)
 	start_button.add_theme_color_override("font_color", UIPalette.TEXT)
 	start_button.add_theme_color_override("font_hover_color", UIPalette.TEXT)
@@ -87,10 +88,7 @@ func _ready() -> void:
 
 ## 큰 굵은 제목: 크림색 글자 + 치이카와 핑크 두꺼운 테두리 + 아래로 떨어지는 그림자, 영문 부제는 그 아래 핑크 리본
 func _add_title() -> void:
-	var bold := FontVariation.new()
-	bold.base_font = load("res://assets/fonts/NotoSansKR-subset.ttf")
-	bold.variation_opentype = {0x77676874: 900}   # "wght" 축 최대 굵기
-	bold.variation_embolden = 0.25
+	var bold := UIPalette.title_font()
 	var t := _text(TITLE_KO, Vector2(0, 60), Vector2(size.x, 110), 80, UIPalette.TITLE_FILL, 6)
 	t.add_theme_font_override("font", bold)
 	t.add_theme_color_override("font_outline_color", UIPalette.TEXT)
