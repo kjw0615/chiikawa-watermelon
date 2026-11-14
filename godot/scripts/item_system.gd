@@ -76,7 +76,7 @@ func _shake() -> void:
 	busy = true
 	changed.emit()
 	main.play_item_sound("shake")
-	var fx := EffectSprite.spawn(main, "usagi_shake.png", Vector2((main.L + main.R) / 2.0, 250.0), 1.1, 10.0, SHAKE_ANIM_TIME)
+	var fx := EffectSprite.spawn(main, "usagi_shake.png", Vector2((main.L + main.R) / 2.0, 250.0), 1.1, 5.0, SHAKE_ANIM_TIME)
 	var heads := _heads()
 	heads.sort_custom(func(a, b): return a.position.x < b.position.x)
 	for pulse in SHAKE_PULSES:

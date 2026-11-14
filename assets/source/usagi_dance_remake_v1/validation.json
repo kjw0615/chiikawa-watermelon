@@ -1,0 +1,102 @@
+{
+  "texture": "godot\\assets\\effects\\spritesheets\\usagi_shake.png",
+  "size": [
+    768,
+    512
+  ],
+  "fps": 5,
+  "loop_ms": 1200,
+  "frames": [
+    {
+      "frame": 0,
+      "bounds_alpha_gt64": [
+        58,
+        19,
+        202,
+        239
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "ear_pink_pixels": 0,
+      "duration_ms": 200
+    },
+    {
+      "frame": 1,
+      "bounds_alpha_gt64": [
+        46,
+        18,
+        194,
+        239
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "ear_pink_pixels": 0,
+      "duration_ms": 200
+    },
+    {
+      "frame": 2,
+      "bounds_alpha_gt64": [
+        44,
+        14,
+        186,
+        239
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "ear_pink_pixels": 0,
+      "duration_ms": 200
+    },
+    {
+      "frame": 3,
+      "bounds_alpha_gt64": [
+        52,
+        14,
+        211,
+        234
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "ear_pink_pixels": 0,
+      "duration_ms": 200
+    },
+    {
+      "frame": 4,
+      "bounds_alpha_gt64": [
+        31,
+        17,
+        204,
+        234
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "ear_pink_pixels": 0,
+      "duration_ms": 200
+    },
+    {
+      "frame": 5,
+      "bounds_alpha_gt64": [
+        30,
+        13,
+        192,
+        234
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "ear_pink_pixels": 0,
+      "duration_ms": 200
+    }
+  ],
+  "sha256": "c9a0aa5ab1d06cf565502ec440ef8472b428d0e5b8e248eab62e88f35d41fbdf"
+}
