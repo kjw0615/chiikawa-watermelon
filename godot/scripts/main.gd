@@ -816,7 +816,7 @@ func _run_title_test() -> void:
 	await get_tree().create_timer(0.4).timeout
 	var ok := true
 	var title_ok := state == State.TITLE and _title != null and not _panel.visible
-	title_ok = title_ok and _title.start_button.text == "게임 시작" and TitleScreen.TITLE_KO == "치이카와 수박게임"
+	title_ok = title_ok and _title.start_button.text == "게임 시작" and TitleScreen.TITLE_KO == "먼작귀 데굴데굴 섬"
 	print("title shown: state=TITLE ui_hidden=%s %s" % [not _panel.visible, "OK" if title_ok else "FAIL"])
 	ok = ok and title_ok
 	_unhandled_input_blocked_check()

@@ -4,8 +4,8 @@ extends Control
 
 signal start_pressed
 
-const TITLE_KO := "치이카와 수박게임"
-const TITLE_EN := "(Chiikawa Watermelon)"
+const TITLE_KO := "먼작귀 데굴데굴 섬"
+const TITLE_EN := "Chiikawa Tumble Island"
 const DISCLAIMER_KO := "본 게임은 공식이 아닌 비영리 팬 메이드 게임입니다."
 const DISCLAIMER_EN := "This is a non-commercial fan-made game. All rights to Chiikawa belong to Nagano / Chiikawa Committee."
 
@@ -25,8 +25,7 @@ func _ready() -> void:
 	add_child(dim)
 
 	# 제목
-	add_child(_text(TITLE_KO, Vector2(0, 92), Vector2(size.x, 64), 50, Color.WHITE, 8))
-	add_child(_text(TITLE_EN, Vector2(0, 158), Vector2(size.x, 36), 24, Color("ffd6e8"), 6))
+	_add_title()
 
 	# 장식: 치이카와/하치와레/우사기가 둥실둥실
 	for i in 3:
@@ -74,6 +73,42 @@ func _ready() -> void:
 	var en := _text(DISCLAIMER_EN, Vector2(30, 716), Vector2(size.x - 60.0, 56), 14, Color("e9ddff"), 3)
 	en.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(en)
+
+## 큰 굵은 제목: 크림색 글자 + 치이카와 핑크 두꺼운 테두리 + 아래로 떨어지는 그림자, 영문 부제는 그 아래 핑크 리본
+func _add_title() -> void:
+	var bold := FontVariation.new()
+	bold.base_font = load("res://assets/fonts/NotoSansKR-subset.ttf")
+	bold.variation_opentype = {0x77676874: 900}   # "wght" 축 최대 굵기
+	bold.variation_embolden = 0.25
+	var t := _text(TITLE_KO, Vector2(0, 60), Vector2(size.x, 110), 80, Color("fff6e0"), 16)
+	t.add_theme_font_override("font", bold)
+	t.add_theme_color_override("font_outline_color", Color("ff7fae"))
+	t.add_theme_color_override("font_shadow_color", Color("b83a73"))
+	t.add_theme_constant_override("shadow_offset_x", 0)
+	t.add_theme_constant_override("shadow_offset_y", 8)
+	t.add_theme_constant_override("shadow_outline_size", 16)
+	t.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(t)
+	# 영문 부제 리본
+	var ribbon := Panel.new()
+	ribbon.position = Vector2((size.x - 420.0) / 2.0, 178)
+	ribbon.size = Vector2(420, 46)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color("ff9cc2")
+	sb.border_color = Color("fff6e0")
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(23)
+	sb.shadow_color = Color(0, 0, 0, 0.3)
+	sb.shadow_size = 6
+	sb.shadow_offset = Vector2(0, 3)
+	ribbon.add_theme_stylebox_override("panel", sb)
+	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(ribbon)
+	var sub := _text(TITLE_EN, Vector2(0, 182), Vector2(size.x, 38), 26, Color("fffaf0"), 5)
+	sub.add_theme_font_override("font", bold)
+	sub.add_theme_color_override("font_outline_color", Color("d9558a"))
+	sub.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(sub)
 
 func _process(dt: float) -> void:
 	_t += dt
