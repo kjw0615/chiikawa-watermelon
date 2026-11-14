@@ -62,6 +62,8 @@ var merges := 0
 var pops: Array = []
 var _over_modal: Panel
 var _over_score: Label
+var _dragging := false
+var _drag_x := 0.0
 var _pause_menu: PauseMenu
 var _over_restart: Button
 var _over_quit: Button
@@ -186,6 +188,7 @@ func _start_game() -> void:
 	_new_game()
 
 func _new_game() -> void:
+	_dragging = false
 	for h in get_tree().get_nodes_in_group("heads"):
 		h.queue_free()
 	score = 0
@@ -295,6 +298,18 @@ func _draw() -> void:
 		var k: float = p["t"] / 0.3
 		draw_arc(p["pos"], p["r"] * (1.0 + k * 0.6), 0, TAU, 32, Color(1, 0.55, 0.7, 1.0 - k), 4.0)
 
+## 드래그 조준 & 릴리즈 드롭: 눌렀을 때(UI가 소비하지 않은 입력)만 시작, 이동/뗌은 UI 위에서도 받도록 _input 에서 처리
+func _input(e: InputEvent) -> void:
+	if not _dragging:
+		return
+	if e is InputEventMouseMotion:
+		_drag_x = e.position.x
+	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and not e.pressed:
+		_dragging = false
+		_drag_x = e.position.x
+		if state == State.PLAYING and not over and not items.aiming and cooldown <= 0.0:
+			drop(_drag_x)
+
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
 		if items.aiming:
@@ -320,7 +335,8 @@ func _unhandled_input(e: InputEvent) -> void:
 		elif over:
 			pass   # 게임오버 팝업의 버튼으로만 진행
 		elif cooldown <= 0.0:
-			drop(e.position.x)
+			_dragging = true   # 드래그 조준: 누르고 있는 동안 노드가 따라다니고, 떼는 순간 낙하
+			_drag_x = e.position.x
 
 func drop(x: float) -> void:
 	var r := NodeDefs.radius(held_stage)
@@ -608,7 +624,7 @@ func _physics_process(dt: float) -> void:
 			break
 
 func _process(dt: float) -> void:
-	var mx := get_global_mouse_position().x
+	var mx := _drag_x if _dragging else get_global_mouse_position().x
 	if mx > drop_l and mx < drop_r:
 		last_play_x = mx
 	_preview.position = Vector2(clampf(mx, drop_l + 20, drop_r - 20), DROP_Y)
@@ -839,9 +855,28 @@ func _run_title_test() -> void:
 	pause_ok = pause_ok and not _pause_menu.is_open() and not get_tree().paused
 	print("pause menu open/ESC-close %s" % ["OK" if pause_ok else "FAIL"])
 	ok = ok and pause_ok
+	# 드래그 조준: 누르는 동안은 낙하하지 않고, 떼는 순간 그 x에서 낙하
 	cooldown = 0.0
-	drop(240.0)
+	var pr := InputEventMouseButton.new()
+	pr.button_index = MOUSE_BUTTON_LEFT
+	pr.pressed = true
+	pr.position = Vector2(200, 300)
+	_unhandled_input(pr)
+	var mv := InputEventMouseMotion.new()
+	mv.position = Vector2(260, 310)
+	_input(mv)
+	await get_tree().create_timer(0.1).timeout
+	var held_ok := get_tree().get_nodes_in_group("heads").size() == 0 and _dragging and is_equal_approx(_preview.position.x, 260.0)
+	var rl := InputEventMouseButton.new()
+	rl.button_index = MOUSE_BUTTON_LEFT
+	rl.pressed = false
+	rl.position = Vector2(270, 310)
+	_input(rl)
 	await get_tree().create_timer(0.3).timeout
+	var hs := get_tree().get_nodes_in_group("heads")
+	var rel_ok: bool = held_ok and hs.size() == 1 and not _dragging and absf((hs[0] as Head).position.x - 270.0) < 20.0
+	print("drag aim: no drop while pressed + follows, drops on release at x=270 (heads=%d) %s" % [hs.size(), "OK" if rel_ok else "FAIL"])
+	ok = ok and rel_ok
 	var drop_ok := get_tree().get_nodes_in_group("heads").size() == 1
 	print("drop after start: heads=%d %s" % [get_tree().get_nodes_in_group("heads").size(), "OK" if drop_ok else "FAIL"])
 	ok = ok and drop_ok
