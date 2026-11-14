@@ -53,7 +53,7 @@ func _add_field(key: String, caption: String, secret: bool) -> void:
 	var cap := make_label(caption, Vector2(40, 0), Vector2(box_size.x - 80, 20), 14, UIPalette.TEXT_MUTED)
 	box.add_child(cap)
 	var e := LineEdit.new()
-	e.size = Vector2(box_size.x - 80, 36)
+	e.size = Vector2(box_size.x - 80 - (42 if secret else 0), 36)
 	e.secret = secret
 	e.secret_character = "*"   # 웹에서 기본 점(•)이 이모지로 보이는 문제 방지
 	e.max_length = 64 if key != "nick" else AuthValidator.NICK_MAX
@@ -72,7 +72,55 @@ func _add_field(key: String, caption: String, secret: bool) -> void:
 	e.add_theme_stylebox_override("focus", sf)
 	e.text_submitted.connect(func(_t: String): _on_submit())
 	box.add_child(e)
-	_fields[key] = {"cap": cap, "edit": e}
+	var eye: Button = null
+	if secret:
+		e.text_changed.connect(func(t: String): _filter_password(e, t))   # 한글 등 영문/숫자/특수문자 외 입력 차단
+		eye = _make_eye(e)
+	_fields[key] = {"cap": cap, "edit": e, "eye": eye}
+
+## 비밀번호 칸에는 ASCII 인쇄 문자(영문/숫자/특수문자)만 남기고 나머지(한글, 공백 등)는 바로 지운다
+func _filter_password(e: LineEdit, t: String) -> void:
+	var clean := ""
+	for ch in t:
+		var c := ch.unicode_at(0)
+		if c >= 0x21 and c <= 0x7E:
+			clean += ch
+	if clean != t:
+		var col := e.caret_column - (t.length() - clean.length())
+		e.text = clean
+		e.caret_column = clampi(col, 0, clean.length())
+
+## 눈동자 버튼: 누르면 비밀번호 보기/숨기기(secret 토글). 숨김 상태는 눈에 사선
+func _make_eye(e: LineEdit) -> Button:
+	var b := Button.new()
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.size = Vector2(36, 36)
+	b.tooltip_text = "비밀번호 보기/숨기기"
+	var icon := Control.new()
+	icon.size = b.size
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.draw.connect(func():
+		var c := icon.size / 2.0
+		var col := UIPalette.BLUE_INK if not e.secret else UIPalette.TEXT_MUTED
+		var pts := PackedVector2Array()
+		for i in 21:   # 눈 윤곽(아몬드 모양)
+			var u := float(i) / 20.0
+			pts.append(c + Vector2(lerpf(-12.0, 12.0, u), -sin(u * PI) * 7.0))
+		for i in 21:
+			var u := 1.0 - float(i) / 20.0
+			pts.append(c + Vector2(lerpf(-12.0, 12.0, u), sin(u * PI) * 7.0))
+		pts.append(pts[0])
+		icon.draw_polyline(pts, col, 2.0)
+		icon.draw_circle(c, 4.0, col)
+		if e.secret:
+			icon.draw_line(c + Vector2(-11, 11), c + Vector2(11, -11), col, 2.5))
+	b.add_child(icon)
+	b.pressed.connect(func():
+		e.secret = not e.secret
+		icon.queue_redraw())
+	box.add_child(b)
+	return b
 
 ## 로그인 / 회원가입 전환: 보이는 입력칸을 다시 배치
 func _set_mode(is_signup: bool) -> void:
@@ -89,9 +137,13 @@ func _set_mode(is_signup: bool) -> void:
 		var on: bool = k in keys
 		(f["cap"] as Label).visible = on
 		(f["edit"] as LineEdit).visible = on
+		if f["eye"] != null:
+			(f["eye"] as Button).visible = on
 		if on:
 			(f["cap"] as Label).position.y = y
 			(f["edit"] as LineEdit).position = Vector2(40, y + 22.0)
+			if f["eye"] != null:
+				(f["eye"] as Button).position = Vector2(box_size.x - 40.0 - 36.0, y + 22.0)
 			y += 68.0
 	_msg.position.y = y + 2.0
 	_forgot.visible = not is_signup
@@ -104,6 +156,8 @@ func _on_open() -> void:
 	_submit.disabled = false
 	for k in _fields:
 		(_fields[k]["edit"] as LineEdit).text = ""
+		if _fields[k]["eye"] != null:
+			(_fields[k]["edit"] as LineEdit).secret = true   # 열 때마다 비밀번호는 숨김 상태로
 	_set_mode(false)
 	(_fields["nick"]["edit"] as LineEdit).grab_focus()
 

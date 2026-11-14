@@ -75,6 +75,7 @@ func _heads() -> Array:
 func _shake() -> void:
 	busy = true
 	changed.emit()
+	main.play_item_sound("shake")
 	var fx := EffectSprite.spawn(main, "usagi_shake.png", Vector2((main.L + main.R) / 2.0, 250.0), 1.1, 10.0, SHAKE_ANIM_TIME)
 	var heads := _heads()
 	heads.sort_custom(func(a, b): return a.position.x < b.position.x)
@@ -98,6 +99,7 @@ func _shake() -> void:
 func _swap() -> void:
 	busy = true
 	changed.emit()
+	main.play_item_sound("swap")
 	var fx := EffectSprite.spawn(main, "bazaar_ticket.png", Vector2(clampf(main._preview.position.x, main.drop_l + 60.0, main.drop_r - 60.0), main.DROP_Y + 110.0), 0.85, 12.0)
 	await get_tree().create_timer(0.25).timeout
 	main.reroll_held()
@@ -134,6 +136,7 @@ func confirm_aim(x: float) -> void:
 	aiming = false
 	_aim_sword.aiming = false
 	_aim_sword = null
+	main.play_item_sound("sword")   # 명검을 떨어뜨리는 순간
 
 func cancel_aim(refund := true) -> void:
 	if not aiming:
@@ -179,6 +182,7 @@ func _fountain() -> void:
 	fountain_peak_y = 9999.0
 	fountain_big_rise = 0.0
 	_big_rest.clear()
+	main.play_item_sound("fountain")
 	if _particles == null:
 		_particles = _make_particles()
 		main.add_child(_particles)

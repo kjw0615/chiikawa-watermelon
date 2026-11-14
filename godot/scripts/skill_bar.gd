@@ -147,7 +147,7 @@ func _box(fill: Color, border: Color, radius := 10, width := 2) -> StyleBoxFlat:
 
 func refresh() -> void:
 	_fill = _items.gauge / ItemDefs.gauge_max()
-	_gauge_label.text = ("★ " if _items.gauge >= ItemDefs.gauge_max() else "") + "게이지 %d%%" % roundi(_items.gauge)
+	_gauge_label.text = "게이지 %d%%" % roundi(_items.gauge)   # 별/이모지 글리프 없이 글자만
 	for id in _buttons:
 		var usable := _items.can_use(id)
 		var btn: Button = _buttons[id]

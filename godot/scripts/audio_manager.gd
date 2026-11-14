@@ -8,7 +8,7 @@ signal changed
 
 const BUS_BGM := "BGM"
 const BUS_SFX := "SFX"
-const SAVE_PATH := "user://best.cfg"   # [audio] volume/muted = SFX(기존 키), bgm_volume/bgm_muted = BGM
+const SAVE_PATH := "user://settings.cfg"   # [audio] volume/muted = SFX, bgm_volume/bgm_muted = BGM (점수는 저장하지 않음)
 const BGM_STREAM := "res://audio/bgm.mp3"
 const TEST_FLAGS := ["--shot", "--verify", "--title-test", "--text-audit", "--net-test"]
 

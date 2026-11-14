@@ -6,6 +6,7 @@ signal help_pressed
 
 const COLS := 6
 const CELL := 40.0
+const SCORE_FS := 36   # SCORE 와 BEST 가 같은 글꼴/크기
 
 var _next_icon: TextureRect
 var _next_name: Label
@@ -19,66 +20,62 @@ func _ready() -> void:
 	bg.add_theme_stylebox_override("panel", _box(UIPalette.CREAM, UIPalette.BORDER, 14))
 	add_child(bg)
 
-	# 점수(왼쪽) + BEST(오른쪽) + 게임 설명(?) 버튼
-	var score_w := size.x * 0.56
-	var st := _add_title("SCORE", Vector2(0, 10), 14)
-	st.size.x = score_w
-	st.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
-	_score_label = _label(Vector2(0, 28), 36)
-	_score_label.size = Vector2(score_w, 46)
-	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_score_label.add_theme_color_override("font_color", UIPalette.SCORE)
-	add_child(_score_label)
-	var bt := _add_title("BEST", Vector2(score_w, 10), 14)
-	bt.size.x = size.x - score_w - 34.0
-	bt.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
-	_best_label = _label(Vector2(score_w, 34), 20)
-	_best_label.size = Vector2(size.x - score_w - 34.0, 34)
-	_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_best_label.add_theme_color_override("font_color", UIPalette.BLUE_INK)
-	add_child(_best_label)
+	# 상단: 게임 설명 버튼 / 점수(왼쪽) + BEST(오른쪽, 같은 글꼴·크기)
 	var help := Button.new()
-	help.text = "?"
-	help.position = Vector2(size.x - 34.0, 8.0)
-	help.size = Vector2(26, 26)
+	help.text = "게임 설명"
+	help.position = Vector2(size.x - 100.0, 8.0)
+	help.size = Vector2(88, 26)
 	help.focus_mode = Control.FOCUS_NONE
-	help.tooltip_text = "게임 설명"
 	help.add_theme_font_override("font", UIPalette.button_font())
-	help.add_theme_font_size_override("font_size", 16)
+	help.add_theme_font_size_override("font_size", 13)
 	UIPalette.style_button(help, [UIPalette.NEXT_BG, UIPalette.PAPER, UIPalette.DIVIDER], 13)
 	help.pressed.connect(func(): help_pressed.emit())
 	add_child(help)
-	_divider(86.0)
+	var col_w := size.x / 2.0
+	for k in 2:
+		var t := _add_title("SCORE" if k == 0 else "BEST", Vector2(col_w * k, 36), 14)
+		t.size.x = col_w
+		t.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
+		var v := _label(Vector2(col_w * k, 52), SCORE_FS)
+		v.size = Vector2(col_w, 46)
+		v.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_theme_color_override("font_color", UIPalette.SCORE)
+		add_child(v)
+		if k == 0:
+			_score_label = v
+		else:
+			_best_label = v
+	_divider(112.0)
 
-	_add_title("NEXT", Vector2(0, 96), 16).add_theme_color_override("font_color", UIPalette.BLUE_INK)
+	_add_title("NEXT", Vector2(0, 122), 16).add_theme_color_override("font_color", UIPalette.BLUE_INK)
 	var next_box := Panel.new()
-	next_box.position = Vector2((size.x - 84.0) / 2.0, 122)
+	next_box.position = Vector2((size.x - 84.0) / 2.0, 148)
 	next_box.size = Vector2(84, 84)
 	next_box.add_theme_stylebox_override("panel", _box(UIPalette.NEXT_BG, UIPalette.NEXT_BORDER, 12))
 	add_child(next_box)
 	_next_icon = _icon_rect(Vector2(6, 6), Vector2(72, 72))
 	next_box.add_child(_next_icon)
-	_next_stage_label = _label(Vector2(0, 210), 14)
+	_next_stage_label = _label(Vector2(0, 236), 14)
 	_next_stage_label.size = Vector2(size.x, 20)
 	_next_stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_next_stage_label)
-	_next_name = _label(Vector2(0, 230), 13)
+	_next_name = _label(Vector2(0, 256), 13)
 	_next_name.size = Vector2(size.x, 20)
 	_next_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_next_name)
-	_divider(262.0)
+	_divider(288.0)
 
 	var card := Panel.new()   # 진화표 카드
-	card.position = Vector2(10, 266)
+	card.position = Vector2(10, 292)
 	card.size = Vector2(size.x - 20.0, 158)
 	card.add_theme_stylebox_override("panel", _box(UIPalette.PAPER, UIPalette.BORDER, 12))
 	add_child(card)
-	_add_title("합쳐지는 순서", Vector2(0, 272), 16)
+	_add_title("합쳐지는 순서", Vector2(0, 298), 16)
 	var x0 := (size.x - COLS * CELL) / 2.0
 	for i in NodeDefs.count():
 		var droppable := i <= NodeDefs.drop_max_index()
 		var cell := Panel.new()
-		cell.position = Vector2(x0 + (i % COLS) * CELL + 1, 302 + (i / COLS) * 60.0)
+		cell.position = Vector2(x0 + (i % COLS) * CELL + 1, 328 + (i / COLS) * 60.0)
 		cell.size = Vector2(CELL - 2.0, CELL - 2.0)
 		cell.tooltip_text = "%d. %s" % [i + 1, NodeDefs.node_name(i)]
 		var final := i == NodeDefs.count() - 1
@@ -89,24 +86,39 @@ func _ready() -> void:
 		var icon := _icon_rect(Vector2(4, 4), cell.size - Vector2(8, 8))
 		icon.texture = HeadShapes.get_data(i)["tex"]
 		cell.add_child(icon)
-		var num := _label(Vector2(x0 + (i % COLS) * CELL, 302 + (i / COLS) * 60.0 + CELL - 3.0), 11)
+		var num := _label(Vector2(x0 + (i % COLS) * CELL, 328 + (i / COLS) * 60.0 + CELL - 3.0), 11)
 		num.size = Vector2(CELL, 16)
 		num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		num.text = "%d%s" % [i + 1, "★" if i == NodeDefs.count() - 1 else ""]
+		num.text = str(i + 1)   # 별/이모지 글리프 없이 숫자만
 		add_child(num)
-	var note := _label(Vector2(14, 432), 12)
+	var note := _label(Vector2(14, 458), 12)
 	note.size = Vector2(size.x - 28, 56)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_color_override("font_color", UIPalette.TEXT_MUTED)
-	note.text = "분홍 1~%d단계: 랜덤 드롭 / 하늘색: 합체로만 생성\n%d단계끼리 합체 시 소멸 +100점" % [NodeDefs.drop_max_index() + 1, NodeDefs.count()]
+	note.text = "분홍 1~%d단계: 랜덤 드롭 / 하늘색: 합체로만 생성
+%d단계끼리 합체 시 소멸 +100점" % [NodeDefs.drop_max_index() + 1, NodeDefs.count()]
 	add_child(note)
 
 func set_score(v: int) -> void:
-	_score_label.text = str(v)
+	_fit(_score_label, str(v))
 
 func set_best(v: int) -> void:
-	_best_label.text = str(v)
-	_best_label.add_theme_font_size_override("font_size", 20 if _best_label.text.length() <= 6 else 15)   # 자릿수가 많으면 줄여서 칸 안에
+	_fit(_best_label, str(v))
+
+## 점수/BEST 는 같은 글꼴·크기(SCORE_FS). 자릿수가 많아 칸을 넘으면 둘이 똑같이 함께 줄인다
+func _fit(l: Label, text: String) -> void:
+	l.text = text
+	_fit_both()
+
+func _fit_both() -> void:
+	var fs := SCORE_FS
+	var font := _score_label.get_theme_font("font")
+	var widest := maxf(font.get_string_size(_score_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, SCORE_FS).x, font.get_string_size(_best_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, SCORE_FS).x)
+	var avail := size.x / 2.0 - 12.0
+	if widest > avail:
+		fs = maxi(int(floor(SCORE_FS * avail / widest)), 12)
+	_score_label.add_theme_font_size_override("font_size", fs)
+	_best_label.add_theme_font_size_override("font_size", fs)
 
 func set_next(stage: int) -> void:
 	_next_icon.texture = HeadShapes.get_data(stage)["tex"]

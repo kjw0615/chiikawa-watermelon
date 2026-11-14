@@ -10,6 +10,7 @@ static var _nick_re := _compile("^[가-힣a-zA-Z0-9-]+$")
 static var _email_re := _compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$")
 static var _letter_re := _compile("[A-Za-z]")
 static var _digit_re := _compile("[0-9]")
+static var _ascii_re := _compile("^[!-~]+$")   # 공백 없는 영문/숫자/특수문자(ASCII 인쇄 문자)만
 
 static func _compile(p: String) -> RegEx:
 	var r := RegEx.new()
@@ -28,6 +29,8 @@ static func nickname_error(s: String) -> String:
 static func password_error(s: String) -> String:
 	if s.length() < PW_MIN:
 		return "비밀번호는 %d자 이상으로 입력해 주세요." % PW_MIN
+	if _ascii_re.search(s) == null:
+		return "비밀번호에는 영문, 숫자, 특수문자만 쓸 수 있어요. (한글과 공백은 안 돼요)"
 	if _letter_re.search(s) == null or _digit_re.search(s) == null:
 		return "비밀번호는 영문과 숫자를 모두 섞어서 만들어 주세요."
 	return ""

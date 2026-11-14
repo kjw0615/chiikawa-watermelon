@@ -19,7 +19,6 @@ const ART_POS := Vector2(-18, 0)
 const BG_ART := preload("res://assets/maps/cave_v1/background.png")
 const FG_ART := preload("res://assets/maps/cave_v1/foreground.png")
 const WALL_THICK := 80.0
-const SAVE_PATH := "user://best.cfg"
 
 # 세이렌 동굴 벽 윤곽(전경 알파에서 추출, 위->아래). 왼쪽/오른쪽은 비대칭.
 const CAVE_LEFT := [
@@ -48,10 +47,12 @@ const SFX := {
 	"land": preload("res://audio/land_squash.wav"),
 	"pop": preload("res://audio/merge_pop.wav"),
 	"chain": preload("res://audio/merge_chain.wav"),
+	"item_shake": preload("res://audio/item_1.mp3"),   # 1번 우사기 엉덩이 흔들기
+	"item_swap": preload("res://audio/item_2.mp3"),    # 2번 캐릭터 교체권
+	"item_sword": preload("res://audio/item_3.mp3"),   # 3번 랏코 명검 투하
 }
 
 var score := 0
-var best := 0
 var over := false
 var held_stage := 0   # 지금 마우스를 따라다니며 드롭 대기 중인 노드
 var next_stage := 0   # 진짜 NEXT: 이번 드롭 다음에 나올 노드
@@ -79,15 +80,10 @@ var _panel: SidePanel
 var _preview: Sprite2D
 var _players: Array[AudioStreamPlayer] = []
 var _sfx_i := 0
+var _synth := {}   # 코드로 합성한 효과음(음식 분수)
 var _auto := false
 var _sep_t := 0.0
 var separations := 0
-var _muted := false
-var _mute_btn: Button
-var _speaker: Control
-var _vol_slider: HSlider
-var _vol_label: Label
-var _volume := 1.0
 var items: ItemSystem
 var _skill_bar: SkillBar
 var last_play_x := 240.0   # 마우스가 마지막으로 있던 플레이 영역 x(명검 낙하 위치)
@@ -96,7 +92,6 @@ var drop_r := 410.0
 enum State { TITLE, PLAYING }
 var state := State.TITLE
 var _title: TitleScreen
-var _audio_box: Panel
 var _credit: Label   # 게임 화면 구석의 면책 문구
 var _art_bg: Sprite2D
 var _art_fg: Sprite2D
@@ -121,29 +116,23 @@ func _ready() -> void:
 	_build_over_modal()
 	_panel = SidePanel.new()
 	_panel.position = Vector2(520, 16)
-	_panel.size = Vector2(264, 700)
+	_panel.size = Vector2(264, 768)
 	_panel.z_index = 40
 	add_child(_panel)
 	_preview = Sprite2D.new()
 	_preview.z_index = 20
 	add_child(_preview)
-	_build_audio_ui()
 	items = ItemSystem.new()
 	items.main = self
 	add_child(items)
 	_skill_bar = SkillBar.new()
-	_skill_bar.position = Vector2(532, 500)
+	_skill_bar.position = Vector2(532, 568)
 	_skill_bar.size = Vector2(240, 190)
 	_skill_bar.z_index = 41
 	add_child(_skill_bar)
 	_skill_bar.setup(items)
 	_skill_bar.use_requested.connect(func(id: String): items.use(id))
-	var cf := ConfigFile.new()
-	if cf.load(SAVE_PATH) == OK:
-		best = cf.get_value("game", "best", 0)
-	# 볼륨/음소거 값은 Audio(autoload)가 관리(자체 테스트는 Audio 가 항상 무음 + 설정 파일 미저장)
-	Audio.changed.connect(_sync_audio_ui)
-	_sync_audio_ui()
+	_synth["fountain"] = SfxSynth.fountain()
 	_build_credit()
 	_pause_menu = PauseMenu.new()
 	add_child(_pause_menu)
@@ -200,7 +189,7 @@ func _build_credit() -> void:
 func _set_state(st: State) -> void:
 	state = st
 	var playing := st == State.PLAYING
-	for n in [_panel, _skill_bar, _audio_box, _credit]:
+	for n in [_panel, _skill_bar, _credit]:
 		n.visible = playing
 	if not playing:
 		_over_modal.visible = false
@@ -389,9 +378,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		else:
 			get_tree().quit()    # 타이틀/게임오버에서는 ESC 로 종료
 		return
-	if e is InputEventKey and e.pressed and e.keycode == KEY_M:
-		Audio.set_sfx_muted(not Audio.sfx_muted)
-	elif state != State.PLAYING:
+	if state != State.PLAYING:
 		return
 	elif e is InputEventKey and e.pressed and e.keycode == KEY_R:
 		_new_game()
@@ -465,22 +452,8 @@ func _merge(a: Head, b: Head) -> void:
 	items.add_gauge_for_stage(st + 1)
 	pops.append({"pos": pos, "r": NodeDefs.radius(mini(st + 1, NodeDefs.count() - 1)), "t": 0.0})
 	_play("chain" if combo >= 2 else "pop", 1.0)
-	if score > best:
-		best = score
-		_save_cfg()
 	_update_hud()
 
-## 인게임 우측 하단 슬라이더/스피커 = SFX(효과음) 조절. 다른 곳(설정/일시정지)에서 바꿔도 여기에 반영
-func _sync_audio_ui() -> void:
-	_muted = Audio.sfx_muted
-	_volume = Audio.sfx_volume
-	_mute_btn.set_pressed_no_signal(_muted)
-	_speaker.queue_redraw()
-	_vol_slider.editable = not _muted
-	_vol_slider.set_value_no_signal(_volume)
-	_vol_label.text = "%d%%" % roundi(_volume * 100.0)
-
-## 우측 하단 사운드 UI: 음소거 토글 + 볼륨 슬라이더
 ## 게임오버 팝업: 다시하기 / 종료하기
 func _build_over_modal() -> void:
 	_over_modal = Panel.new()
@@ -535,91 +508,6 @@ func _modal_button(text: String, pos: Vector2, states: Array) -> Button:
 	UIPalette.style_button(b, states)
 	return b
 
-## 스피커 아이콘(음소거면 빨간 X)
-func _draw_speaker() -> void:
-	var col := UIPalette.BLUE_INK if not _muted else UIPalette.TEXT_MUTED
-	_speaker.draw_rect(Rect2(5, 13, 7, 10), col)
-	_speaker.draw_colored_polygon(PackedVector2Array([Vector2(12, 13), Vector2(21, 6), Vector2(21, 30), Vector2(12, 23)]), col)
-	if _muted:
-		_speaker.draw_line(Vector2(25, 12), Vector2(34, 24), UIPalette.TEXT_MUTED, 3.0)
-		_speaker.draw_line(Vector2(34, 12), Vector2(25, 24), UIPalette.TEXT_MUTED, 3.0)
-	else:
-		_speaker.draw_arc(Vector2(21, 18), 7.0, -0.9, 0.9, 10, col, 2.5)
-		_speaker.draw_arc(Vector2(21, 18), 12.0, -0.9, 0.9, 12, col, 2.5)
-
-func _build_audio_ui() -> void:
-	var box := Panel.new()
-	_audio_box = box
-	box.position = Vector2(520, 728)
-	box.size = Vector2(264, 64)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = UIPalette.CREAM
-	sb.border_color = UIPalette.BORDER
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(12)
-	box.add_theme_stylebox_override("panel", sb)
-	box.z_index = 41
-	add_child(box)
-
-	_mute_btn = Button.new()
-	_mute_btn.toggle_mode = true
-	_mute_btn.focus_mode = Control.FOCUS_NONE   # 스페이스/엔터로 눌리지 않게
-	_mute_btn.flat = true
-	_mute_btn.tooltip_text = "효과음 음소거 (M)"
-	_mute_btn.position = Vector2(8, 14)
-	_mute_btn.size = Vector2(36, 36)
-	_speaker = Control.new()
-	_speaker.size = _mute_btn.size
-	_speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_speaker.draw.connect(_draw_speaker)
-	_mute_btn.add_child(_speaker)
-	_mute_btn.toggled.connect(func(on: bool): Audio.set_sfx_muted(on))
-	box.add_child(_mute_btn)
-
-	_vol_label = Label.new()
-	_vol_label.clip_text = true   # 글자가 많아도 칸이 늘어나지 않게(넘침은 --text-audit 로 점검)
-	_vol_label.position = Vector2(196, 20)
-	_vol_label.size = Vector2(60, 22)
-	_vol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_vol_label.add_theme_font_size_override("font_size", 13)
-	_vol_label.add_theme_color_override("font_color", UIPalette.TEXT)
-	box.add_child(_vol_label)
-
-	_vol_slider = HSlider.new()
-	_vol_slider.min_value = 0.0
-	_vol_slider.max_value = 1.0
-	_vol_slider.step = 0.01
-	_vol_slider.focus_mode = Control.FOCUS_NONE
-	_vol_slider.position = Vector2(52, 24)
-	_vol_slider.size = Vector2(140, 16)
-	var track := StyleBoxFlat.new()
-	track.bg_color = UIPalette.DIVIDER
-	track.set_corner_radius_all(4)
-	track.content_margin_top = 4
-	track.content_margin_bottom = 4
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = UIPalette.SLIDER_FILL
-	fill.set_corner_radius_all(4)
-	fill.content_margin_top = 4
-	fill.content_margin_bottom = 4
-	_vol_slider.add_theme_icon_override("grabber", UIPalette.circle_texture(UIPalette.BLUE_INK))
-	_vol_slider.add_theme_icon_override("grabber_highlight", UIPalette.circle_texture(UIPalette.SLIDER_GRABBER_HOVER))
-	_vol_slider.add_theme_icon_override("grabber_disabled", UIPalette.circle_texture(UIPalette.TEXT_MUTED))
-	_vol_slider.add_theme_stylebox_override("slider", track)
-	_vol_slider.add_theme_stylebox_override("grabber_area", fill)
-	_vol_slider.add_theme_stylebox_override("grabber_area_highlight", fill)
-	_vol_slider.value_changed.connect(func(v: float): Audio.set_sfx_volume(v, false))   # 실시간 반영
-	_vol_slider.drag_ended.connect(func(_changed: bool): Audio.save_settings())         # 놓을 때 저장
-	box.add_child(_vol_slider)
-
-func _save_cfg() -> void:
-	if _auto:
-		return   # 테스트 실행이 사용자 최고점/설정을 덮어쓰지 않게
-	var cf := ConfigFile.new()
-	cf.load(SAVE_PATH)
-	cf.set_value("game", "best", best)
-	cf.save(SAVE_PATH)
-
 ## 끼임 안전장치: 서로 콜라이더가 깊게 겹친 쌍을 찾아 겹친 깊이만큼 중심 반대 방향으로 위치를 보정하고 살짝 밀어 분리
 func _separate_overlaps() -> void:
 	var hs := get_tree().get_nodes_in_group("heads")
@@ -654,10 +542,14 @@ func _separate_overlaps() -> void:
 			b.apply_central_impulse(n * 40.0 * b.mass)
 			separations += 1
 
+## 아이템 효과음: 모두 SFX 버스(_players)로 재생
+func play_item_sound(id: String) -> void:
+	_play("item_" + id if SFX.has("item_" + id) else id, 1.0)
+
 func _play(name: String, vol: float) -> void:
 	var p := _players[_sfx_i]
 	_sfx_i = (_sfx_i + 1) % _players.size()
-	p.stream = SFX[name]
+	p.stream = SFX[name] if SFX.has(name) else _synth[name]
 	p.volume_db = linear_to_db(vol)
 	p.play()
 
@@ -701,10 +593,10 @@ func _process(dt: float) -> void:
 
 func _update_hud() -> void:
 	_panel.set_score(score)
-	# BEST: 로그인하면 서버 최고점, 아니면 로컬 최고점(지금 점수가 더 높으면 실시간으로 올라간다)
-	_panel.set_best(maxi(Supabase.server_best if Supabase.signed_in else best, score))
+	# BEST: 로그인하면 서버 최고점(현재 점수가 넘으면 실시간으로 현재 점수), 비로그인이면 곧 현재 점수(로컬 저장 없음)
+	_panel.set_best(maxi(Supabase.server_best, score) if Supabase.signed_in else score)
 
-## 게임오버: 로컬 최고점 저장은 기존 로직이 하고, 여기서는 로그인 상태면 서버에 제출(신기록일 때만 반영됨)
+## 게임오버: 로그인 상태면 서버에 제출(서버가 신기록일 때만 반영). 로컬 최고점 저장은 하지 않는다
 func _on_game_over() -> void:
 	_over_note.text = ""
 	if not Supabase.signed_in:
@@ -998,12 +890,12 @@ func _run_title_test() -> void:
 	var confirm_ok := c1 and c2 and c3 and c4
 	print("start confirm (guest popup %s, login btn %s, guest start %s, signed-in direct %s) %s" % [c1, c2, c3, c4, "OK" if confirm_ok else "FAIL"])
 	ok = ok and confirm_ok
-	# 오디오: BGM/SFX 버스 분리, 슬라이더=SFX, BGM 루프 스트림, 설정 모달
+	# 오디오: BGM/SFX 버스 분리, BGM 루프 스트림, 설정 모달
 	var bgm_i := AudioServer.get_bus_index("BGM")
 	var sfx_i := AudioServer.get_bus_index("SFX")
 	Audio.set_bgm_volume(0.25, false)
 	Audio.set_sfx_volume(0.5, false)
-	_vol_slider.value = 0.8   # 인게임 슬라이더는 SFX 를 움직인다
+	Audio.set_sfx_volume(0.8, false)
 	var audio_ok := bgm_i > 0 and sfx_i > 0 and is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(bgm_i)), 0.25) and is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(sfx_i)), 0.8)
 	Audio.set_bgm_muted(true, false)
 	audio_ok = audio_ok and AudioServer.is_bus_mute(bgm_i) and not AudioServer.is_bus_mute(sfx_i)
@@ -1013,8 +905,52 @@ func _run_title_test() -> void:
 	_settings_modal.open()
 	audio_ok = audio_ok and _settings_modal.is_open()
 	_settings_modal.close()
-	print("audio buses (BGM/SFX split, in-game slider=SFX, bgm loop stream, test silent) %s" % ["OK" if audio_ok else "FAIL"])
+	print("audio buses (BGM/SFX split, bgm loop stream, test silent) %s" % ["OK" if audio_ok else "FAIL"])
 	ok = ok and audio_ok
+	# 아이템 효과음(1~3번 mp3 + 4번 합성), BEST 규칙, 사이드바 별 글리프 제거, 비밀번호 칸 필터/눈 토글
+	var snd_ok := SFX.has("item_shake") and SFX.has("item_swap") and SFX.has("item_sword") and _synth.has("fountain")
+	snd_ok = snd_ok and (_synth["fountain"] as AudioStreamWAV).get_length() > 2.8 and (_synth["fountain"] as AudioStreamWAV).data.size() > 100000
+	for id in ["shake", "swap", "sword", "fountain"]:
+		play_item_sound(id)
+		snd_ok = snd_ok and _players[(_sfx_i + _players.size() - 1) % _players.size()].stream != null and _players[(_sfx_i + _players.size() - 1) % _players.size()].bus == "SFX"
+	score = 500
+	_update_hud()
+	var guest_best: String = _panel._best_label.text
+	Supabase.signed_in = true
+	Supabase.server_best = 900
+	_update_hud()
+	var login_best: String = _panel._best_label.text
+	score = 1200
+	_update_hud()
+	var live_best: String = _panel._best_label.text
+	Supabase.signed_in = false
+	Supabase.server_best = 0
+	score = 0
+	_update_hud()
+	var best_ok := guest_best == "500" and login_best == "900" and live_best == "1200" and _panel._best_label.get_theme_font_size("font_size") == _panel._score_label.get_theme_font_size("font_size") and _panel._score_label.get_theme_font_size("font_size") == 36
+	var star := false
+	for root in [_panel, _skill_bar]:
+		var st: Array = [root]
+		while not st.is_empty():
+			var c: Node = st.pop_back()
+			st.append_array(c.get_children())
+			if (c is Label or c is Button) and (c.text.contains("★") or c.text.contains("?") and c is Button):
+				star = true
+	_skill_bar._items.gauge = 100.0
+	_skill_bar.refresh()
+	star = star or _skill_bar._gauge_label.text.contains("★")
+	var pw_edit := _auth_modal._fields["pw"]["edit"] as LineEdit
+	pw_edit.text = "ab한글12 !"
+	_auth_modal._filter_password(pw_edit, pw_edit.text)
+	var eye := _auth_modal._fields["pw"]["eye"] as Button
+	var was_secret := pw_edit.secret
+	eye.pressed.emit()
+	var shown := not pw_edit.secret
+	eye.pressed.emit()
+	var pw_ok := pw_edit.text == "ab12!" and was_secret and shown and pw_edit.secret and pw_edit.secret_character == "*" and AuthValidator.password_error("abc한글1234") != ""
+	var ui_ok := snd_ok and best_ok and not star and pw_ok
+	print("item sounds %s ; BEST rules (guest %s, login %s, live %s) %s ; no star/? glyphs %s ; password filter+eye %s" % [snd_ok, guest_best, login_best, live_best, best_ok, not star, pw_ok])
+	ok = ok and ui_ok
 	# 로그인/회원가입 모달: 잘못된 입력은 서버 호출 없이 한국어 안내, 랭킹은 오프라인 안내
 	_auth_modal.open()
 	_auth_modal._set_mode(true)
@@ -1103,7 +1039,7 @@ func _run_text_audit() -> void:
 	_rank_modal._show_rows(sample)
 	_rank_modal._mine.text = "열두글자열두글자열두글자님의 최고점: 99999999"
 	_auth_modal._set_mode(true)
-	for item in [_panel, _skill_bar, _audio_box, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box]:
+	for item in [_panel, _skill_bar, _credit, _over_modal, _pause_menu, _rank_modal.box, _auth_modal.box, _help_modal.box, _settings_modal.box, _confirm_modal.box, _reset_modal.box]:
 		r = _audit_tree(item)
 		n += r[0]; bad += r[1]
 	_auth_modal._set_mode(false)   # 로그인 탭(아이디 + 비밀번호 + 비밀번호 찾기)도 점검
